@@ -3,7 +3,7 @@
   smeagollib.formatting
   (:require [clojure.string :as cs]
             [markdown.core :as md]
-            [smeagol.configuration :refer [config]]
+            [smeagollib.configuration :refer [config]]
             [smeagollib.local-links :refer [local-links]]
             [taoensso.timbre :as log]))
 
@@ -48,7 +48,7 @@
 
   **NOTE** that it is not expected that this function forms part of a stable
   API."
-  [^String text ^Integer index]
+  [^String text ^Integer _]
   (str "<pre class=\"backticks\">```" (.trim text) "\n```</pre>"))
 
 
@@ -217,7 +217,7 @@
   and extension specifications, and return a map with top-level keys:
   * `:content`, the HTML content of the page to serve; and
   * `:extensions`, being a subset of the `:formatters` map from
-  `smeagol.configuration/config` covering the extensions actually used in the
+  `smeagollib.configuration/config` covering the extensions actually used in the
   generated content."
   [^clojure.lang.Associative context]
    (reintegrate-inclusions
@@ -226,31 +226,3 @@
        (assoc context :extensions #{})
        (cs/split (or (:source context) "") #"```")
        '())))
-
-
-;; (def first-token "pswp")
-;; (def kw (keyword "pswp"))
-;; (def fragment "pswp
-;;   ![Frost on a gate, Laurieston](content/uploads/g1.jpg)
-;;   ![Feathered crystals on snow surface, Taliesin](content/uploads/g2.jpg)
-;;   ![Feathered snow on log, Taliesin](content/uploads/g3.jpg)
-;;   ![Crystaline growth on seed head, Taliesin](content/uploads/g4.jpg)")
-;; (def index 0)
-;; (def formatter (read-string (-> config :formatters kw :formatter)))
-;; formatter
-;; (eval (list formatter (subs fragment (count first-token)) index))
-;; (process-photoswipe (subs fragment (count first-token)) index)
-
-;; (process-text
-;;   {:source "pswp
-;;   ![Frost on a gate, Laurieston](content/uploads/g1.jpg)
-;;   ![Feathered crystals on snow surface, Taliesin](content/uploads/g2.jpg)
-;;   ![Feathered snow on log, Taliesin](content/uploads/g3.jpg)
-;;   ![Crystaline growth on seed head, Taliesin](content/uploads/g4.jpg)"} )
-
-;; (process-text {:source (slurp (clojure.java.io/file smeagol.util/content-dir "Extensible Markup.md"))})
-
-
-
-
-

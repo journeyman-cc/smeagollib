@@ -1,8 +1,9 @@
 (defproject smeagollib "0.1.0-SNAPSHOT"
-  :description "The working parts of the Smeagol Wiki engine, stripped out as a library."
-  :url "https://github.com/journeyman-cc/smeagollib"
-  :license {:name "GNU General Public License,version 2.0 or (at your option) any later version"
-            :url "https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html"}
+  :cloverage {:output "docs/cloverage"}
+  :codox {:metadata {:doc "**TODO**: write docs"
+                     :doc/format :markdown}
+          :output-path "docs/codox"
+          :source-uri "https://github.com/journeyman-cc/smeagollib/blob/master/{filepath}#L{line}"}
   :dependencies [[clj-jgit "1.0.0"]
                  [clj-yaml "0.4.0"]
                  [clojure.java-time "0.3.2"]
@@ -34,4 +35,10 @@
                  [org.slf4j/jcl-over-slf4j "1.7.30"]
                  [prismatic/schema "1.1.12"]
                  [prone "2020-01-17"]
-                 [selmer "1.12.28"]])
+                 [selmer "1.12.28"]]
+  :description "The working parts of the Smeagol Wiki engine, stripped out as a library."
+  :license {:name "GNU General Public License,version 2.0 or (at your option) any later version"
+            :url "https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html"}
+  :plugins [[lein-cloverage "1.1.2"]
+            [lein-codox "0.10.7"]]
+  :url "https://github.com/journeyman-cc/smeagollib")

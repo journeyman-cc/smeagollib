@@ -11,9 +11,9 @@
             [noir.io :as io]
             [selmer.parser :refer [render]]
             [selmer.util :refer [without-escaping]]
-            [smeagol.configuration :refer [config]]
-            [smeagol.extensions.utils :refer [resource-url-or-data->data uploaded?]]
-            [smeagol.util :refer [content-dir upload-dir]]
+            [smeagollib.configuration :refer [config]]
+            [smeagollib.extensions.utils :refer [resource-url-or-data->data uploaded?]]
+            [smeagollib.util :refer [content-dir upload-dir]]
             [taoensso.timbre :as log]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -41,7 +41,8 @@
 
 (defn process-full-photoswipe
   "Process a specification for a photoswipe gallery, using a JSON
-  specification based on that documented on the Photoswipe website."
+  specification based on that documented on the 
+   [Photoswipe website](https://photoswipe.com/documentation/getting-started.html)."
   [^String spec ^Integer index]
   (without-escaping
    (render

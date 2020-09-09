@@ -3,15 +3,15 @@
       file are called (via `sanity-check-installation`, which is the only
       supported entry point) at first start-up."
       :author "Simon Brooke"}
-  smeagol.sanity
+  smeagollib.sanity
   (:import (java.util Locale))
   (:require [clojure.java.io :as cjio]
             [clojure.string :as string]
             [hiccup.core :refer [html]]
             [scot.weft.i18n.core :as i18n]
-            [smeagol.authenticate :refer [password-file-path]]
-            [smeagol.configuration :refer [config-file-path config]]
-            [smeagol.util :refer [content-dir upload-dir]]
+            [smeagollib.authenticate :refer [*password-file-path*]]
+            [smeagollib.configuration :refer [config-file-path config]]
+            [smeagollib.util :refer [content-dir upload-dir]]
             [taoensso.timbre :as timbre]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -246,7 +246,7 @@
     (check-config config-path)
     (check-password-file passwd-path)))
   ([]
-   (check-everything content-dir upload-dir config-file-path password-file-path)))
+   (check-everything content-dir upload-dir config-file-path *password-file-path*)))
 
 
 (defn- get-causes
@@ -394,9 +394,9 @@
 
 
 (defn as-hiccup-footer
-  "Create and return a dummy hiccup footer. `messages` past for consistency 
+  "Create and return a dummy hiccup footer. `messages` passed for consistency 
    with other 'as-hiccup' functions but not used here."
-  [messages]
+  [_]
   [:footer
    [:div {:id "credits"}
     [:div

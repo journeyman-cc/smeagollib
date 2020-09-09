@@ -1,0 +1,1445 @@
+<html>
+ <head>
+   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <link rel="stylesheet" href="../coverage.css"/>  <title> smeagollib/sanity.clj </title>
+ </head>
+ <body>
+<span class="covered" title="1 out of 1 forms covered">
+                001&nbsp;&nbsp;(ns&nbsp;^{:doc&nbsp;&quot;Functions&nbsp;related&nbsp;to&nbsp;sanity&nbsp;checks&nbsp;and&nbsp;error&nbsp;reporting&nbsp;in&nbsp;conditions
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                002&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;where&nbsp;the&nbsp;environment&nbsp;may&nbsp;not&nbsp;be&nbsp;sane.&nbsp;Generally,&nbsp;the&nbsp;functions&nbsp;in&nbsp;this
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                003&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file&nbsp;are&nbsp;called&nbsp;(via&nbsp;`sanity-check-installation`,&nbsp;which&nbsp;is&nbsp;the&nbsp;only
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                004&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;supported&nbsp;entry&nbsp;point)&nbsp;at&nbsp;first&nbsp;start-up.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                005&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:author&nbsp;&quot;Simon&nbsp;Brooke&quot;}
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                006&nbsp;&nbsp;&nbsp;&nbsp;smeagollib.sanity
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                007&nbsp;&nbsp;&nbsp;&nbsp;(:import&nbsp;(java.util&nbsp;Locale))
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                008&nbsp;&nbsp;&nbsp;&nbsp;(:require&nbsp;[clojure.java.io&nbsp;:as&nbsp;cjio]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                009&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[clojure.string&nbsp;:as&nbsp;string]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                010&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[hiccup.core&nbsp;:refer&nbsp;[html]]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                011&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[scot.weft.i18n.core&nbsp;:as&nbsp;i18n]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                012&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[smeagollib.authenticate&nbsp;:refer&nbsp;[*password-file-path*]]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                013&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[smeagollib.configuration&nbsp;:refer&nbsp;[config-file-path&nbsp;config]]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                014&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[smeagollib.util&nbsp;:refer&nbsp;[content-dir&nbsp;upload-dir]]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                015&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[taoensso.timbre&nbsp;:as&nbsp;timbre]))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                016&nbsp;&nbsp;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                017&nbsp;&nbsp;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                018&nbsp;&nbsp;;;;;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                019&nbsp;&nbsp;;;;;&nbsp;Smeagol:&nbsp;a&nbsp;very&nbsp;simple&nbsp;Wiki&nbsp;engine.
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                020&nbsp;&nbsp;;;;;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                021&nbsp;&nbsp;;;;;&nbsp;This&nbsp;program&nbsp;is&nbsp;free&nbsp;software;&nbsp;you&nbsp;can&nbsp;redistribute&nbsp;it&nbsp;and&#x2F;or
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                022&nbsp;&nbsp;;;;;&nbsp;modify&nbsp;it&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                023&nbsp;&nbsp;;;;;&nbsp;as&nbsp;published&nbsp;by&nbsp;the&nbsp;Free&nbsp;Software&nbsp;Foundation;&nbsp;either&nbsp;version&nbsp;2
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                024&nbsp;&nbsp;;;;;&nbsp;of&nbsp;the&nbsp;License,&nbsp;or&nbsp;(at&nbsp;your&nbsp;option)&nbsp;any&nbsp;later&nbsp;version.
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                025&nbsp;&nbsp;;;;;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                026&nbsp;&nbsp;;;;;&nbsp;This&nbsp;program&nbsp;is&nbsp;distributed&nbsp;in&nbsp;the&nbsp;hope&nbsp;that&nbsp;it&nbsp;will&nbsp;be&nbsp;useful,
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                027&nbsp;&nbsp;;;;;&nbsp;but&nbsp;WITHOUT&nbsp;ANY&nbsp;WARRANTY;&nbsp;without&nbsp;even&nbsp;the&nbsp;implied&nbsp;warranty&nbsp;of
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                028&nbsp;&nbsp;;;;;&nbsp;MERCHANTABILITY&nbsp;or&nbsp;FITNESS&nbsp;FOR&nbsp;A&nbsp;PARTICULAR&nbsp;PURPOSE.&nbsp;&nbsp;See&nbsp;the
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                029&nbsp;&nbsp;;;;;&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License&nbsp;for&nbsp;more&nbsp;details.
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                030&nbsp;&nbsp;;;;;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                031&nbsp;&nbsp;;;;;&nbsp;You&nbsp;should&nbsp;have&nbsp;received&nbsp;a&nbsp;copy&nbsp;of&nbsp;the&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                032&nbsp;&nbsp;;;;;&nbsp;along&nbsp;with&nbsp;this&nbsp;program;&nbsp;if&nbsp;not,&nbsp;write&nbsp;to&nbsp;the&nbsp;Free&nbsp;Software
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                033&nbsp;&nbsp;;;;;&nbsp;Foundation,&nbsp;Inc.,&nbsp;51&nbsp;Franklin&nbsp;Street,&nbsp;Fifth&nbsp;Floor,&nbsp;Boston,&nbsp;MA&nbsp;&nbsp;02110-1301,
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                034&nbsp;&nbsp;;;;;&nbsp;USA.
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                035&nbsp;&nbsp;;;;;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                036&nbsp;&nbsp;;;;;&nbsp;Copyright&nbsp;(C)&nbsp;2014&nbsp;Simon&nbsp;Brooke
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                037&nbsp;&nbsp;;;;;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                038&nbsp;&nbsp;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                039&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                040&nbsp;&nbsp;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                041&nbsp;&nbsp;;;&nbsp;The&nbsp;general&nbsp;idea&nbsp;behind&nbsp;the&nbsp;&#x27;check-&#x27;&nbsp;functions&nbsp;in&nbsp;this&nbsp;file&nbsp;is&nbsp;that,&nbsp;if&nbsp;the
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                042&nbsp;&nbsp;;;&nbsp;check&nbsp;passes,&nbsp;they&nbsp;return&nbsp;true;&nbsp;if&nbsp;it&nbsp;fails,&nbsp;they&nbsp;return&nbsp;a&nbsp;map&nbsp;of&nbsp;problems&nbsp;found.
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                043&nbsp;&nbsp;;;&nbsp;the&nbsp;map&nbsp;comprises&nbsp;keys&nbsp;bound&nbsp;to&nbsp;&#x27;explanation&#x27;&nbsp;lists&nbsp;of&nbsp;keywords&nbsp;and&nbsp;strings.&nbsp;If
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                044&nbsp;&nbsp;;;&nbsp;internationalisation&nbsp;is&nbsp;available,&nbsp;the&nbsp;keywords&nbsp;will&nbsp;then&nbsp;be&nbsp;translated&nbsp;into
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                045&nbsp;&nbsp;;;&nbsp;localised&nbsp;strings&nbsp;for&nbsp;presentation&nbsp;to&nbsp;the&nbsp;user;&nbsp;but&nbsp;if&nbsp;it&nbsp;isn&#x27;t&nbsp;available,
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                046&nbsp;&nbsp;;;&nbsp;the&nbsp;keywords&nbsp;need&nbsp;to&nbsp;be&nbsp;human&nbsp;readable.&nbsp;Sanity&nbsp;checking&nbsp;ought&nbsp;to&nbsp;work&nbsp;even
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                047&nbsp;&nbsp;;;&nbsp;when&nbsp;the&nbsp;installation&nbsp;is&nbsp;quite&nbsp;badly&nbsp;broken.
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                048&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                049&nbsp;&nbsp;(defn&nbsp;check-exists
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                050&nbsp;&nbsp;&nbsp;&nbsp;&quot;Check&nbsp;this&nbsp;`path`&nbsp;exists.&nbsp;If&nbsp;so,&nbsp;return&nbsp;`true`;&nbsp;if&nbsp;not,&nbsp;return&nbsp;a&nbsp;map
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                051&nbsp;&nbsp;&nbsp;&nbsp;containing&nbsp;this&nbsp;`problem-key`&nbsp;bound&nbsp;to&nbsp;a&nbsp;list&nbsp;explaining&nbsp;the&nbsp;problem.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                052&nbsp;&nbsp;&nbsp;&nbsp;[path&nbsp;problem-key]
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                053&nbsp;&nbsp;&nbsp;&nbsp;(if-not
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                054&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(.exists&nbsp;(cjio&#x2F;as-file&nbsp;path))
+                </span><br/>
+<span class="not-covered" title="0 out of 7 forms covered">
+                055&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{problem-key&nbsp;(list&nbsp;:file-or-directory&nbsp;path&nbsp;:does-not-exist)}
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                056&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;true))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                057&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                058&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                059&nbsp;&nbsp;(defn&nbsp;check-is-dir
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                060&nbsp;&nbsp;&nbsp;&nbsp;&quot;Check&nbsp;this&nbsp;`path`&nbsp;is&nbsp;a&nbsp;directory.&nbsp;If&nbsp;so,&nbsp;return&nbsp;`true`;&nbsp;if&nbsp;not,&nbsp;return&nbsp;a&nbsp;map
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                061&nbsp;&nbsp;&nbsp;&nbsp;containing&nbsp;this&nbsp;`problem-key`&nbsp;bound&nbsp;to&nbsp;a&nbsp;list&nbsp;explaining&nbsp;the&nbsp;problem.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                062&nbsp;&nbsp;&nbsp;&nbsp;[path&nbsp;problem-key]
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                063&nbsp;&nbsp;&nbsp;&nbsp;(if-not
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                064&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(.isDirectory&nbsp;(cjio&#x2F;as-file&nbsp;path))
+                </span><br/>
+<span class="not-covered" title="0 out of 7 forms covered">
+                065&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{problem-key&nbsp;(list&nbsp;:file-or-directory&nbsp;path&nbsp;:is-not-directory)}
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                066&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;true))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                067&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                068&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                069&nbsp;&nbsp;(defn&nbsp;check-can-write
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                070&nbsp;&nbsp;&nbsp;&nbsp;&quot;Check&nbsp;this&nbsp;`path`&nbsp;is&nbsp;writable.&nbsp;If&nbsp;so,&nbsp;return&nbsp;`true`;&nbsp;if&nbsp;not,&nbsp;return&nbsp;a&nbsp;map
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                071&nbsp;&nbsp;&nbsp;&nbsp;containing&nbsp;this&nbsp;`problem-key`&nbsp;bound&nbsp;to&nbsp;a&nbsp;list&nbsp;explaining&nbsp;the&nbsp;problem.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                072&nbsp;&nbsp;&nbsp;&nbsp;[path&nbsp;problem-key]
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                073&nbsp;&nbsp;&nbsp;&nbsp;(if-not
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                074&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(.canWrite&nbsp;(cjio&#x2F;as-file&nbsp;path))
+                </span><br/>
+<span class="not-covered" title="0 out of 7 forms covered">
+                075&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{problem-key&nbsp;(list&nbsp;:file-or-directory&nbsp;path&nbsp;:is-not-writable)}
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                076&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;true))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                077&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                078&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                079&nbsp;&nbsp;(defn&nbsp;check-can-read
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                080&nbsp;&nbsp;&nbsp;&nbsp;&quot;Check&nbsp;this&nbsp;`path`&nbsp;is&nbsp;readable.&nbsp;If&nbsp;so,&nbsp;return&nbsp;`true`;&nbsp;if&nbsp;not,&nbsp;return&nbsp;a&nbsp;map
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                081&nbsp;&nbsp;&nbsp;&nbsp;containing&nbsp;this&nbsp;`problem-key`&nbsp;bound&nbsp;to&nbsp;a&nbsp;list&nbsp;explaining&nbsp;the&nbsp;problem.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                082&nbsp;&nbsp;&nbsp;&nbsp;[path&nbsp;problem-key]
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                083&nbsp;&nbsp;&nbsp;&nbsp;(if-not
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                084&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(.canRead&nbsp;(cjio&#x2F;as-file&nbsp;path))
+                </span><br/>
+<span class="not-covered" title="0 out of 7 forms covered">
+                085&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{problem-key&nbsp;(list&nbsp;:file-or-directory&nbsp;path&nbsp;:is-not-readable)}
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                086&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;true))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                087&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                088&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                089&nbsp;&nbsp;(defn&nbsp;check-with-protection
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                090&nbsp;&nbsp;&nbsp;&nbsp;&quot;Apply&nbsp;this&nbsp;`check`&nbsp;to&nbsp;this&nbsp;`path`&nbsp;and&nbsp;`problem-key`;&nbsp;if&nbsp;no&nbsp;exception&nbsp;is&nbsp;thrown,&nbsp;return
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                091&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;result.&nbsp;If&nbsp;an&nbsp;exception&nbsp;is&nbsp;thrown,&nbsp;return&nbsp;a&nbsp;map&nbsp;comprising&nbsp;a&nbsp;problem-key&nbsp;bound&nbsp;to
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                092&nbsp;&nbsp;&nbsp;&nbsp;an&nbsp;explanation&nbsp;which&nbsp;includes&nbsp;the&nbsp;exception.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                093&nbsp;&nbsp;&nbsp;&nbsp;[check&nbsp;problem-key&nbsp;&amp;&nbsp;args]
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                094&nbsp;&nbsp;&nbsp;&nbsp;(try
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                095&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(apply&nbsp;check&nbsp;args)
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                096&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(catch&nbsp;Exception&nbsp;ex
+                </span><br/>
+<span class="not-covered" title="0 out of 7 forms covered">
+                097&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{problem-key&nbsp;(list&nbsp;problem-key&nbsp;args&nbsp;ex)})))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                098&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                099&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                100&nbsp;&nbsp;(defn&nbsp;compound-check-results
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                101&nbsp;&nbsp;&nbsp;&nbsp;[&amp;&nbsp;results]
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                102&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;[problems&nbsp;(remove&nbsp;true?&nbsp;results)]
+                </span><br/>
+<span class="not-covered" title="0 out of 9 forms covered">
+                103&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(if&nbsp;(empty?&nbsp;problems)&nbsp;true&nbsp;(apply&nbsp;merge&nbsp;problems))))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                104&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                105&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                106&nbsp;&nbsp;(defn&nbsp;check-can-read-and-write
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                107&nbsp;&nbsp;&nbsp;&nbsp;&quot;Check&nbsp;this&nbsp;`path`&nbsp;is&nbsp;both&nbsp;readable&nbsp;and&nbsp;writable.&nbsp;If&nbsp;so,&nbsp;return&nbsp;`true`;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                108&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;not,&nbsp;return&nbsp;a&nbsp;map&nbsp;containing&nbsp;this&nbsp;`problem-key`&nbsp;bound&nbsp;to&nbsp;a&nbsp;list&nbsp;explaining
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                109&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;problem.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                110&nbsp;&nbsp;&nbsp;&nbsp;[path&nbsp;problem-key]
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                111&nbsp;&nbsp;&nbsp;&nbsp;(compound-check-results
+                </span><br/>
+<span class="not-covered" title="0 out of 13 forms covered">
+                112&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(check-with-protection&nbsp;check-exists&nbsp;:file-or-directory&nbsp;path&nbsp;(keyword&nbsp;(str&nbsp;(name&nbsp;problem-key)&nbsp;&quot;-exists&quot;)))
+                </span><br/>
+<span class="not-covered" title="0 out of 13 forms covered">
+                113&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(check-with-protection&nbsp;check-can-read&nbsp;:file-or-directory&nbsp;path&nbsp;(keyword&nbsp;(str&nbsp;(name&nbsp;problem-key)&nbsp;&quot;-can-read&quot;)))
+                </span><br/>
+<span class="not-covered" title="0 out of 13 forms covered">
+                114&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(check-with-protection&nbsp;check-can-write&nbsp;:file-or-directory&nbsp;path&nbsp;(keyword&nbsp;(str&nbsp;(name&nbsp;problem-key)&nbsp;&quot;-can-write&quot;)))))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                115&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                116&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                117&nbsp;&nbsp;(defn&nbsp;check-content-dir
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                118&nbsp;&nbsp;&nbsp;&nbsp;&quot;Check&nbsp;that&nbsp;`path`&nbsp;exists&nbsp;and&nbsp;is&nbsp;populated&nbsp;as&nbsp;a&nbsp;valid&nbsp;content&nbsp;directory.&nbsp;Return&nbsp;true
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                119&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;so,&nbsp;else&nbsp;a&nbsp;map&nbsp;of&nbsp;all&nbsp;problems&nbsp;found.&nbsp;If&nbsp;`path`&nbsp;is&nbsp;not&nbsp;supplied,&nbsp;default&nbsp;to&nbsp;the
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                120&nbsp;&nbsp;&nbsp;&nbsp;configured&nbsp;content&nbsp;directory.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                121&nbsp;&nbsp;&nbsp;&nbsp;([path]
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                122&nbsp;&nbsp;&nbsp;&nbsp;(compound-check-results
+                </span><br/>
+<span class="not-covered" title="0 out of 6 forms covered">
+                123&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(check-with-protection&nbsp;check-is-dir&nbsp;:file-or-directory&nbsp;path&nbsp;:content-dir-is-dir)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                124&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(check-can-read-and-write&nbsp;path&nbsp;:content-dir)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                125&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(apply&nbsp;compound-check-results
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                126&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(map
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                127&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#(check-can-read-and-write
+                </span><br/>
+<span class="not-covered" title="0 out of 8 forms covered">
+                128&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(cjio&#x2F;file&nbsp;path&nbsp;(str&nbsp;&quot;_&quot;&nbsp;%&nbsp;&quot;.md&quot;))
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                129&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                130&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&quot;side-bar&quot;&nbsp;&quot;edit-side-bar&quot;&nbsp;&quot;header&quot;&nbsp;]))))
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                131&nbsp;&nbsp;&nbsp;&nbsp;([]
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                132&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(check-content-dir&nbsp;content-dir)))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                133&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                134&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                135&nbsp;&nbsp;(defn&nbsp;check-upload-dir
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                136&nbsp;&nbsp;&nbsp;&nbsp;&quot;Check&nbsp;that&nbsp;the&nbsp;upload&nbsp;directory&nbsp;at&nbsp;`path`&nbsp;(defaults&nbsp;to&nbsp;configured&nbsp;upload&nbsp;path)
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                137&nbsp;&nbsp;&nbsp;&nbsp;exists&nbsp;and&nbsp;is&nbsp;readable&nbsp;and&nbsp;writable;&nbsp;check&nbsp;that&nbsp;each&nbsp;of&nbsp;the&nbsp;configured
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                138&nbsp;&nbsp;&nbsp;&nbsp;thumbnail&nbsp;subdirectories&nbsp;also&nbsp;exists&nbsp;and&nbsp;is&nbsp;writable.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                139&nbsp;&nbsp;&nbsp;&nbsp;([path]
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                140&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(compound-check-results
+                </span><br/>
+<span class="not-covered" title="0 out of 6 forms covered">
+                141&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(check-with-protection&nbsp;check-is-dir&nbsp;:file-or-directory&nbsp;path&nbsp;:upload-dir-is-dir)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                142&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(check-can-read-and-write&nbsp;path&nbsp;:upload-dir)
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                143&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(apply
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                144&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;compound-check-results
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                145&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(map
+                </span><br/>
+<span class="not-covered" title="0 out of 7 forms covered">
+                146&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#(let&nbsp;[p&nbsp;(cjio&#x2F;file&nbsp;path&nbsp;(name&nbsp;%))]
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                147&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(compound-check-results
+                </span><br/>
+<span class="not-covered" title="0 out of 6 forms covered">
+                148&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(check-with-protection&nbsp;check-is-dir&nbsp;:file-or-directory&nbsp;p&nbsp;:thumbnails)
+                </span><br/>
+<span class="not-covered" title="0 out of 6 forms covered">
+                149&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(check-with-protection&nbsp;check-can-read-and-write&nbsp;:file-or-directory&nbsp;p&nbsp;:thumbnails)))
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                150&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(keys&nbsp;(:thumbnails&nbsp;config))))))
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                151&nbsp;&nbsp;&nbsp;&nbsp;([]&nbsp;(check-upload-dir&nbsp;upload-dir)))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                152&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                153&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                154&nbsp;&nbsp;(defn&nbsp;check-password-member-field
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                155&nbsp;&nbsp;&nbsp;&nbsp;&quot;Check&nbsp;that&nbsp;this&nbsp;`member`&nbsp;map,&nbsp;expected&nbsp;to&nbsp;be&nbsp;an&nbsp;entry&nbsp;from&nbsp;the&nbsp;passwd
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                156&nbsp;&nbsp;&nbsp;&nbsp;file&nbsp;whose&nbsp;key&nbsp;was&nbsp;`user-key`,&nbsp;has&nbsp;this&nbsp;`field`&nbsp;and&nbsp;if&nbsp;not&nbsp;return&nbsp;a
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                157&nbsp;&nbsp;&nbsp;&nbsp;problem&nbsp;explanation&nbsp;with&nbsp;this&nbsp;`problem-key`.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                158&nbsp;&nbsp;&nbsp;&nbsp;[member&nbsp;field&nbsp;user-key&nbsp;problem-key]
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                159&nbsp;&nbsp;&nbsp;&nbsp;(if
+                </span><br/>
+<span class="not-covered" title="0 out of 10 forms covered">
+                160&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(and&nbsp;(map?&nbsp;member)&nbsp;(member&nbsp;field))
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                161&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;true
+                </span><br/>
+<span class="not-covered" title="0 out of 7 forms covered">
+                162&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{problem-key&nbsp;(list&nbsp;:user-lacks-field&nbsp;user-key&nbsp;field)}))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                163&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                164&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                165&nbsp;&nbsp;(defn&nbsp;check-password-member
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                166&nbsp;&nbsp;&nbsp;&nbsp;&quot;Check&nbsp;that&nbsp;this&nbsp;`member`&nbsp;map,&nbsp;expected&nbsp;to&nbsp;be&nbsp;an&nbsp;entry&nbsp;from&nbsp;the&nbsp;passwd
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                167&nbsp;&nbsp;&nbsp;&nbsp;file&nbsp;whose&nbsp;key&nbsp;was&nbsp;`user-key`,&nbsp;has&nbsp;all&nbsp;the&nbsp;required&nbsp;fields&nbsp;and&nbsp;if&nbsp;not
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                168&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;a&nbsp;problem&nbsp;explanation&nbsp;with&nbsp;this&nbsp;`problem-key`.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                169&nbsp;&nbsp;&nbsp;&nbsp;[member&nbsp;user-key&nbsp;problem-key]
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                170&nbsp;&nbsp;&nbsp;&nbsp;(apply
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                171&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;compound-check-results
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                172&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(map
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                173&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#(check-password-member-field
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                174&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;member
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                175&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                176&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;user-key
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                177&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(keyword
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                178&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(string&#x2F;join
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                179&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;-&quot;
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                180&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(list
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                181&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(name&nbsp;problem-key)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                182&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(name&nbsp;user-key)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                183&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(name&nbsp;%)))))
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                184&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:email&nbsp;:password])))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                185&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                186&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                187&nbsp;&nbsp;(defn&nbsp;check-password-members
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                188&nbsp;&nbsp;&nbsp;&nbsp;&quot;Check&nbsp;that&nbsp;all&nbsp;entries&nbsp;in&nbsp;this&nbsp;`passwd-content`&nbsp;have&nbsp;the&nbsp;required&nbsp;fields.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                189&nbsp;&nbsp;&nbsp;&nbsp;[passwd-content]
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                190&nbsp;&nbsp;&nbsp;&nbsp;(apply
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                191&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;compound-check-results
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                192&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(map
+                </span><br/>
+<span class="not-covered" title="0 out of 7 forms covered">
+                193&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#(check-password-member&nbsp;(passwd-content&nbsp;%)&nbsp;%&nbsp;:missing-field)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                194&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(keys&nbsp;passwd-content))))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                195&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                196&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                197&nbsp;&nbsp;(defn&nbsp;check-at-least-one-admin
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                198&nbsp;&nbsp;&nbsp;&nbsp;&quot;Check&nbsp;that&nbsp;there&nbsp;is&nbsp;at&nbsp;least&nbsp;one&nbsp;user&nbsp;in&nbsp;this&nbsp;`passwd-content`&nbsp;who&nbsp;has
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                199&nbsp;&nbsp;&nbsp;&nbsp;`:admin`&nbsp;set&nbsp;to&nbsp;`true`.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                200&nbsp;&nbsp;&nbsp;&nbsp;[passwd-content]
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                201&nbsp;&nbsp;&nbsp;&nbsp;(if
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                202&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(empty?
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                203&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(remove
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                204&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nil?
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                205&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(map
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                206&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#(:admin&nbsp;(passwd-content&nbsp;%))
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                207&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(keys&nbsp;passwd-content))))
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                208&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{:no-admin-users&nbsp;&#x27;(:no-admin-users)}
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                209&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;true))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                210&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                211&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                212&nbsp;&nbsp;(defn&nbsp;check-password-file
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                213&nbsp;&nbsp;&nbsp;&nbsp;&quot;Check&nbsp;that&nbsp;the&nbsp;file&nbsp;at&nbsp;this&nbsp;`path`&nbsp;is&nbsp;a&nbsp;valid&nbsp;passwd&nbsp;file.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                214&nbsp;&nbsp;&nbsp;&nbsp;[path]
+                </span><br/>
+<span class="not-covered" title="0 out of 6 forms covered">
+                215&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;[content&nbsp;(read-string&nbsp;(slurp&nbsp;path))]
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                216&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(compound-check-results
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                217&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(check-can-read-and-write&nbsp;path&nbsp;:password-file)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                218&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(check-password-members&nbsp;content)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                219&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(check-at-least-one-admin&nbsp;content))))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                220&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                221&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                222&nbsp;&nbsp;(defn&nbsp;check-config
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                223&nbsp;&nbsp;&nbsp;&nbsp;&quot;Check&nbsp;that&nbsp;the&nbsp;file&nbsp;at&nbsp;this&nbsp;`path`&nbsp;is&nbsp;a&nbsp;valid&nbsp;configuration&nbsp;file&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                224&nbsp;&nbsp;&nbsp;&nbsp;[path]
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                225&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;[content&nbsp;(try
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                226&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(read-string&nbsp;(slurp&nbsp;path))
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                227&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(catch&nbsp;Exception&nbsp;_&nbsp;{}))]
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                228&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(compound-check-results
+                </span><br/>
+<span class="not-covered" title="0 out of 6 forms covered">
+                229&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(check-with-protection&nbsp;check-exists&nbsp;:file-or-directory&nbsp;path&nbsp;:config-exists)
+                </span><br/>
+<span class="not-covered" title="0 out of 6 forms covered">
+                230&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(check-with-protection&nbsp;check-can-read&nbsp;:file-or-directory&nbsp;path&nbsp;:config-can-read)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                231&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(if-not
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                232&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(:site-title&nbsp;content)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                233&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{:site-title-not-configured&nbsp;:site-title-not-configured}
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                234&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;true)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                235&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(if-not
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                236&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(:default-locale&nbsp;content)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                237&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{:default-locale-not-configured&nbsp;:default-locale-not-configured}
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                238&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;true))))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                239&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                240&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                241&nbsp;&nbsp;(defn&nbsp;check-everything
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                242&nbsp;&nbsp;&nbsp;&nbsp;([content-dir&nbsp;upload-dir&nbsp;config-path&nbsp;passwd-path]
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                243&nbsp;&nbsp;&nbsp;&nbsp;(compound-check-results
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                244&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(check-content-dir&nbsp;content-dir)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                245&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(check-upload-dir&nbsp;upload-dir)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                246&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(check-config&nbsp;config-path)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                247&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(check-password-file&nbsp;passwd-path)))
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                248&nbsp;&nbsp;&nbsp;&nbsp;([]
+                </span><br/>
+<span class="not-covered" title="0 out of 6 forms covered">
+                249&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(check-everything&nbsp;content-dir&nbsp;upload-dir&nbsp;config-file-path&nbsp;*password-file-path*)))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                250&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                251&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                252&nbsp;&nbsp;(defn-&nbsp;get-causes
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                253&nbsp;&nbsp;&nbsp;&nbsp;&quot;Get&nbsp;the&nbsp;causes&nbsp;of&nbsp;this&nbsp;`error`,&nbsp;if&nbsp;it&nbsp;is&nbsp;an&nbsp;Exception.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                254&nbsp;&nbsp;&nbsp;&nbsp;[error]
+                </span><br/>
+<span class="covered" title="2 out of 2 forms covered">
+                255&nbsp;&nbsp;&nbsp;&nbsp;(if
+                </span><br/>
+<span class="covered" title="4 out of 4 forms covered">
+                256&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(instance?&nbsp;Exception&nbsp;error)
+                </span><br/>
+<span class="covered" title="6 out of 6 forms covered">
+                257&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(cons&nbsp;error&nbsp;(get-causes&nbsp;(.getCause&nbsp;error)))
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                258&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x27;()))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                259&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                260&nbsp;&nbsp;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                261&nbsp;&nbsp;;;&nbsp;ExplanationPart&nbsp;is&nbsp;a&nbsp;protocol&nbsp;for&nbsp;ensuring&nbsp;that&nbsp;everything&nbsp;which&nbsp;may&nbsp;form&nbsp;part&nbsp;of&nbsp;a
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                262&nbsp;&nbsp;;;&nbsp;problem&nbsp;explanation&nbsp;can&nbsp;be&nbsp;formatted&nbsp;into&nbsp;hiccup,&nbsp;so&nbsp;that&nbsp;it&nbsp;can&nbsp;be&nbsp;converted&nbsp;by
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                263&nbsp;&nbsp;;;&nbsp;hiccup&nbsp;into&nbsp;HTML.&nbsp;The&nbsp;reason&nbsp;for&nbsp;using&nbsp;Hiccup&nbsp;rather&nbsp;than&nbsp;Selmer&nbsp;is&nbsp;that&nbsp;in
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                264&nbsp;&nbsp;;;&nbsp;sanity&nbsp;check&nbsp;I&nbsp;don&#x27;t&nbsp;want&nbsp;to&nbsp;be&nbsp;dependent&nbsp;on&nbsp;the&nbsp;existance&nbsp;of&nbsp;templates.
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                265&nbsp;&nbsp;;;&nbsp;(Also,&nbsp;I&nbsp;personally&nbsp;like&nbsp;Hiccup&nbsp;better,&nbsp;although&nbsp;I&nbsp;know&nbsp;it&#x27;s&nbsp;too&nbsp;geeky&nbsp;for&nbsp;most
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                266&nbsp;&nbsp;;;&nbsp;people)
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                267&nbsp;&nbsp;(defprotocol&nbsp;ExplanationPart
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                268&nbsp;&nbsp;&nbsp;&nbsp;&quot;things&nbsp;which&nbsp;may&nbsp;be&nbsp;parts&nbsp;of&nbsp;explanations&nbsp;need&nbsp;mechanisms&nbsp;for&nbsp;reducing
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                269&nbsp;&nbsp;&nbsp;&nbsp;themselves&nbsp;to&nbsp;natural&nbsp;language&nbsp;where&nbsp;possible&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                270&nbsp;&nbsp;&nbsp;&nbsp;(as-hiccup&nbsp;[this&nbsp;dictionary]&nbsp;&quot;Return&nbsp;`this`&nbsp;as&nbsp;a&nbsp;hiccup-formatted&nbsp;structure.&quot;))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                271&nbsp;&nbsp;
+                </span><br/>
+<span class="partial" title="62 out of 63 forms covered">
+                272&nbsp;&nbsp;(extend-protocol&nbsp;ExplanationPart
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                273&nbsp;&nbsp;&nbsp;&nbsp;nil
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                274&nbsp;&nbsp;&nbsp;&nbsp;(as-hiccup&nbsp;[this&nbsp;dictionary]&nbsp;&quot;&quot;)
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                275&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                276&nbsp;&nbsp;&nbsp;&nbsp;clojure.lang.Keyword
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                277&nbsp;&nbsp;&nbsp;&nbsp;(as-hiccup&nbsp;[this&nbsp;dictionary]
+                </span><br/>
+<span class="covered" title="3 out of 3 forms covered">
+                278&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(str
+                </span><br/>
+<span class="partial" title="6 out of 7 forms covered">
+                279&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(or
+                </span><br/>
+<span class="covered" title="3 out of 3 forms covered">
+                280&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(this&nbsp;dictionary)
+                </span><br/>
+<span class="covered" title="4 out of 4 forms covered">
+                281&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(string&#x2F;replace&nbsp;(name&nbsp;this)&nbsp;&quot;-&quot;&nbsp;&quot;&nbsp;&quot;))
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                282&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&quot;))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                283&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                284&nbsp;&nbsp;&nbsp;&nbsp;clojure.lang.PersistentList
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                285&nbsp;&nbsp;&nbsp;&nbsp;(as-hiccup&nbsp;[this&nbsp;dictionary]
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                286&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(apply
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                287&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vector
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                288&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(cons
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                289&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:div
+                </span><br/>
+<span class="not-covered" title="0 out of 8 forms covered">
+                290&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(map&nbsp;#(as-hiccup&nbsp;%&nbsp;dictionary)&nbsp;this))))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                291&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                292&nbsp;&nbsp;&nbsp;&nbsp;clojure.lang.PersistentVector
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                293&nbsp;&nbsp;&nbsp;&nbsp;(as-hiccup&nbsp;[this&nbsp;dictionary]
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                294&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(apply
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                295&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vector
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                296&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(cons
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                297&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:div
+                </span><br/>
+<span class="not-covered" title="0 out of 8 forms covered">
+                298&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(map&nbsp;#(as-hiccup&nbsp;%&nbsp;dictionary)&nbsp;this))))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                299&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                300&nbsp;&nbsp;&nbsp;&nbsp;clojure.lang.PersistentArrayMap
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                301&nbsp;&nbsp;&nbsp;&nbsp;(as-hiccup&nbsp;[this&nbsp;dictionary]
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                302&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(apply
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                303&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vector
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                304&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(cons
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                305&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:dl
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                306&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(map
+                </span><br/>
+<span class="not-covered" title="0 out of 8 forms covered">
+                307&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#(list&nbsp;[:dt&nbsp;(as-hiccup&nbsp;%&nbsp;dictionary)]
+                </span><br/>
+<span class="not-covered" title="0 out of 8 forms covered">
+                308&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:dd&nbsp;(as-hiccup&nbsp;(this&nbsp;%)&nbsp;dictionary)])
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                309&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(keys&nbsp;this)))))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                310&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                311&nbsp;&nbsp;&nbsp;&nbsp;clojure.lang.PersistentHashMap
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                312&nbsp;&nbsp;&nbsp;&nbsp;(as-hiccup&nbsp;[this&nbsp;dictionary]
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                313&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(apply
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                314&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vector
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                315&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(cons
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                316&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:dl
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                317&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(map
+                </span><br/>
+<span class="not-covered" title="0 out of 8 forms covered">
+                318&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#(list&nbsp;[:dt&nbsp;(as-hiccup&nbsp;%&nbsp;dictionary)]
+                </span><br/>
+<span class="not-covered" title="0 out of 8 forms covered">
+                319&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:dd&nbsp;(as-hiccup&nbsp;(this&nbsp;%)&nbsp;dictionary)])
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                320&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(keys&nbsp;this)))))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                321&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                322&nbsp;&nbsp;&nbsp;&nbsp;java.lang.String
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                323&nbsp;&nbsp;&nbsp;&nbsp;(as-hiccup&nbsp;[this&nbsp;dictionary]&nbsp;(str&nbsp;this&nbsp;&quot;&nbsp;&quot;))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                324&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                325&nbsp;&nbsp;&nbsp;&nbsp;java.lang.StackTraceElement
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                326&nbsp;&nbsp;&nbsp;&nbsp;(as-hiccup&nbsp;[this&nbsp;dictionary]
+                </span><br/>
+<span class="covered" title="3 out of 3 forms covered">
+                327&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:li&nbsp;this])
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                328&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                329&nbsp;&nbsp;&nbsp;&nbsp;java.lang.Exception
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                330&nbsp;&nbsp;&nbsp;&nbsp;(as-hiccup&nbsp;[this&nbsp;dictionary]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                331&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;;;&nbsp;OK,&nbsp;this&nbsp;is&nbsp;the&nbsp;interesting&nbsp;one
+                </span><br/>
+<span class="covered" title="2 out of 2 forms covered">
+                332&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(apply
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                333&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vector
+                </span><br/>
+<span class="covered" title="3 out of 3 forms covered">
+                334&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(cons
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                335&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:div
+                </span><br/>
+<span class="covered" title="2 out of 2 forms covered">
+                336&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(cons
+                </span><br/>
+<span class="covered" title="3 out of 3 forms covered">
+                337&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{:class&nbsp;&quot;sanity-exception&quot;}
+                </span><br/>
+<span class="covered" title="2 out of 2 forms covered">
+                338&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(map
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                339&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(fn&nbsp;[x]
+                </span><br/>
+<span class="covered" title="2 out of 2 forms covered">
+                340&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:div
+                </span><br/>
+<span class="covered" title="3 out of 3 forms covered">
+                341&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{:class&nbsp;&quot;sanity-cause&quot;}
+                </span><br/>
+<span class="covered" title="3 out of 3 forms covered">
+                342&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:h2&nbsp;(.getMessage&nbsp;x)]
+                </span><br/>
+<span class="covered" title="5 out of 5 forms covered">
+                343&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:div&nbsp;{:class&nbsp;&quot;sanity-stacktrace&quot;}
+                </span><br/>
+<span class="covered" title="2 out of 2 forms covered">
+                344&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(apply
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                345&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vector
+                </span><br/>
+<span class="covered" title="3 out of 3 forms covered">
+                346&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(cons
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                347&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:ol
+                </span><br/>
+<span class="covered" title="2 out of 2 forms covered">
+                348&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(map
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                349&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;as-hiccup
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                350&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(.getStackTrace&nbsp;x)
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                351&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dictionary)))]])
+                </span><br/>
+<span class="covered" title="3 out of 3 forms covered">
+                352&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(get-causes&nbsp;this))))))
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                353&nbsp;&nbsp;&nbsp;&nbsp;java.lang.Object
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                354&nbsp;&nbsp;&nbsp;&nbsp;(as-hiccup&nbsp;[this&nbsp;dictionary]&nbsp;(str&nbsp;this&nbsp;&quot;&nbsp;&quot;)))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                355&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                356&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                357&nbsp;&nbsp;(defn&nbsp;get-locale-messages
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                358&nbsp;&nbsp;&nbsp;&nbsp;&quot;Get&nbsp;messages&nbsp;for&nbsp;the&nbsp;server-side&nbsp;locale.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                359&nbsp;&nbsp;&nbsp;&nbsp;[]
+                </span><br/>
+<span class="covered" title="2 out of 2 forms covered">
+                360&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;[locale&nbsp;(Locale&#x2F;getDefault)
+                </span><br/>
+<span class="covered" title="5 out of 5 forms covered">
+                361&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;locale-specifier&nbsp;(str&nbsp;(.getLanguage&nbsp;locale)&nbsp;&quot;-&quot;&nbsp;(.getCountry&nbsp;locale))]
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                362&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(try
+                </span><br/>
+<span class="covered" title="5 out of 5 forms covered">
+                363&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(i18n&#x2F;get-messages&nbsp;locale-specifier&nbsp;&quot;i18n&quot;&nbsp;&quot;en-GB&quot;)
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                364&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(catch&nbsp;Exception&nbsp;_&nbsp;{}))))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                365&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                366&nbsp;&nbsp;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                367&nbsp;&nbsp;;;&nbsp;Prepackaged&nbsp;hiccup&nbsp;sub-units
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                368&nbsp;&nbsp;(defn&nbsp;as-hiccup-head
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                369&nbsp;&nbsp;&nbsp;&nbsp;[messages]
+                </span><br/>
+<span class="covered" title="2 out of 2 forms covered">
+                370&nbsp;&nbsp;&nbsp;&nbsp;[:head
+                </span><br/>
+<span class="covered" title="6 out of 6 forms covered">
+                371&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:title&nbsp;(as-hiccup&nbsp;:smeagol-not-initialised&nbsp;messages)]
+                </span><br/>
+<span class="covered" title="7 out of 7 forms covered">
+                372&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:link&nbsp;{:href&nbsp;&quot;content&#x2F;stylesheet.css&quot;&nbsp;:rel&nbsp;&quot;stylesheet&quot;}]])
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                373&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                374&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                375&nbsp;&nbsp;(defn&nbsp;as-hiccup-header
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                376&nbsp;&nbsp;&nbsp;&nbsp;&quot;Create&nbsp;and&nbsp;return&nbsp;a&nbsp;hiccup-formatted&nbsp;header&nbsp;wrapping&nbsp;these&nbsp;`messages`.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                377&nbsp;&nbsp;&nbsp;&nbsp;[messages]
+                </span><br/>
+<span class="covered" title="2 out of 2 forms covered">
+                378&nbsp;&nbsp;&nbsp;&nbsp;[:header
+                </span><br/>
+<span class="covered" title="6 out of 6 forms covered">
+                379&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:div&nbsp;{:id&nbsp;&quot;nav&quot;}&nbsp;&quot;&amp;nbsp;&quot;]
+                </span><br/>
+<span class="covered" title="6 out of 6 forms covered">
+                380&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:h1&nbsp;(as-hiccup&nbsp;:smeagol-not-initialised&nbsp;messages)]
+                </span><br/>
+<span class="covered" title="3 out of 3 forms covered">
+                381&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:p&nbsp;&quot;&amp;nbsp;&quot;]])
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                382&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                383&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                384&nbsp;&nbsp;(defn&nbsp;as-hiccup-see-doc
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                385&nbsp;&nbsp;&nbsp;&nbsp;&quot;Create&nbsp;and&nbsp;return&nbsp;a&nbsp;hiccup&nbsp;&#x27;refer&nbsp;to&nbsp;documentation&#x27;&nbsp;paragraph,&nbsp;wrapping&nbsp;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                386&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;these&nbsp;`messages`.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                387&nbsp;&nbsp;&nbsp;&nbsp;[messages]
+                </span><br/>
+<span class="covered" title="8 out of 8 forms covered">
+                388&nbsp;&nbsp;&nbsp;&nbsp;[:p&nbsp;(as-hiccup&nbsp;:see-documentation&nbsp;messages)
+                </span><br/>
+<span class="covered" title="2 out of 2 forms covered">
+                389&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:a
+                </span><br/>
+<span class="covered" title="3 out of 3 forms covered">
+                390&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{:href
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                391&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;https:&#x2F;&#x2F;github.com&#x2F;journeyman-cc&#x2F;smeagol&#x2F;wiki&#x2F;Deploying-Smeagol&quot;}
+                </span><br/>
+<span class="covered" title="4 out of 4 forms covered">
+                392&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(as-hiccup&nbsp;:here&nbsp;messages)]&nbsp;&quot;.&nbsp;&quot;
+                </span><br/>
+<span class="covered" title="4 out of 4 forms covered">
+                393&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(as-hiccup&nbsp;:fix-and-restart&nbsp;messages)&nbsp;&quot;.&quot;])
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                394&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                395&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                396&nbsp;&nbsp;(defn&nbsp;as-hiccup-footer
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                397&nbsp;&nbsp;&nbsp;&nbsp;&quot;Create&nbsp;and&nbsp;return&nbsp;a&nbsp;dummy&nbsp;hiccup&nbsp;footer.&nbsp;`messages`&nbsp;passed&nbsp;for&nbsp;consistency&nbsp;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                398&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;with&nbsp;other&nbsp;&#x27;as-hiccup&#x27;&nbsp;functions&nbsp;but&nbsp;not&nbsp;used&nbsp;here.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                399&nbsp;&nbsp;&nbsp;&nbsp;[_]
+                </span><br/>
+<span class="covered" title="2 out of 2 forms covered">
+                400&nbsp;&nbsp;&nbsp;&nbsp;[:footer
+                </span><br/>
+<span class="covered" title="5 out of 5 forms covered">
+                401&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:div&nbsp;{:id&nbsp;&quot;credits&quot;}
+                </span><br/>
+<span class="covered" title="4 out of 4 forms covered">
+                402&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:div
+                </span><br/>
+<span class="covered" title="11 out of 11 forms covered">
+                403&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:img&nbsp;{:height&nbsp;&quot;16&quot;&nbsp;:width&nbsp;&quot;16&quot;&nbsp;:alt&nbsp;&quot;one&nbsp;wiki&nbsp;to&nbsp;rule&nbsp;them&nbsp;all&quot;&nbsp;:src&nbsp;&quot;img&#x2F;smeagol.png&quot;}]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                404&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;One&nbsp;Wiki&nbsp;to&nbsp;rule&nbsp;them&nbsp;all&nbsp;||&nbsp;Smeagol&nbsp;wiki&nbsp;engine&nbsp;||&nbsp;&quot;
+                </span><br/>
+<span class="covered" title="2 out of 2 forms covered">
+                405&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:img
+                </span><br/>
+<span class="covered" title="9 out of 9 forms covered">
+                406&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{:height&nbsp;&quot;16&quot;&nbsp;:width&nbsp;&quot;16&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                407&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:alt&nbsp;&quot;The&nbsp;Web&nbsp;Engineering&nbsp;Factory&nbsp;&amp;amp;&nbsp;Toolworks&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                408&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:src&nbsp;&quot;http:&#x2F;&#x2F;www.weft.scot&#x2F;images&#x2F;weft.logo.64.png&quot;}]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                409&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;Developed&nbsp;by&nbsp;&quot;
+                </span><br/>
+<span class="covered" title="6 out of 6 forms covered">
+                410&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:a&nbsp;{:href&nbsp;&quot;http:&#x2F;&#x2F;www.weft.scot&#x2F;&quot;}&quot;WEFT&quot;]]]])
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                411&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                412&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                413&nbsp;&nbsp;(defn&nbsp;sanity-check-report
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                414&nbsp;&nbsp;&nbsp;&nbsp;&quot;Convert&nbsp;this&nbsp;`problem`&nbsp;report&nbsp;into&nbsp;a&nbsp;nicely&nbsp;formatted&nbsp;HTML&nbsp;page&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                415&nbsp;&nbsp;&nbsp;&nbsp;[problems]
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                416&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;[messages&nbsp;(get-locale-messages)]
+                </span><br/>
+<span class="not-covered" title="0 out of 291 forms covered">
+                417&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(html
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                418&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:html
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                419&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(as-hiccup-head&nbsp;messages)
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                420&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:body
+                </span><br/>
+<span class="not-covered" title="0 out of 6 forms covered">
+                421&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(as-hiccup-header&nbsp;messages)
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                422&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:div&nbsp;{:id&nbsp;&quot;error&quot;}
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                423&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:p&nbsp;{:class&nbsp;&quot;error&quot;}
+                </span><br/>
+<span class="not-covered" title="0 out of 40 forms covered">
+                424&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(rest&nbsp;(as-hiccup&nbsp;[(count&nbsp;(keys&nbsp;problems))&nbsp;:problems-found]&nbsp;messages))]]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                425&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:div&nbsp;{:id&nbsp;&quot;main-container&quot;&nbsp;:class&nbsp;&quot;sanity-check-report&quot;}
+                </span><br/>
+<span class="not-covered" title="0 out of 16 forms covered">
+                426&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:p&nbsp;(as-hiccup&nbsp;:smeagol-misconfiguration&nbsp;messages)]
+                </span><br/>
+<span class="not-covered" title="0 out of 12 forms covered">
+                427&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(as-hiccup&nbsp;problems&nbsp;messages)
+                </span><br/>
+<span class="not-covered" title="0 out of 8 forms covered">
+                428&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(as-hiccup-see-doc&nbsp;messages)]
+                </span><br/>
+<span class="not-covered" title="0 out of 8 forms covered">
+                429&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(as-hiccup-footer&nbsp;messages)]])))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                430&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                431&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                432&nbsp;&nbsp;(defn-&nbsp;raw-sanity-check-installation
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                433&nbsp;&nbsp;&nbsp;&nbsp;&quot;Actually&nbsp;do&nbsp;the&nbsp;sanity&nbsp;check.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                434&nbsp;&nbsp;&nbsp;&nbsp;[]
+                </span><br/>
+<span class="not-covered" title="0 out of 15 forms covered">
+                435&nbsp;&nbsp;&nbsp;&nbsp;(timbre&#x2F;info&nbsp;&quot;Running&nbsp;sanity&nbsp;check&quot;)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                436&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;[result&nbsp;(check-everything)]
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                437&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(if
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                438&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(map?&nbsp;result)
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                439&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(do
+                </span><br/>
+<span class="not-covered" title="0 out of 21 forms covered">
+                440&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(timbre&#x2F;warn&nbsp;&quot;Sanity&nbsp;check&nbsp;completed;&nbsp;&quot;&nbsp;(count&nbsp;(keys&nbsp;result))&nbsp;&quot;&nbsp;problem(s)&nbsp;found&quot;)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                441&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(sanity-check-report&nbsp;result))
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                442&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(do
+                </span><br/>
+<span class="not-covered" title="0 out of 15 forms covered">
+                443&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(timbre&#x2F;info&nbsp;&quot;Sanity&nbsp;check&nbsp;completed;&nbsp;no&nbsp;problems&nbsp;found&quot;)
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                444&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nil))))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                445&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                446&nbsp;&nbsp;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                447&nbsp;&nbsp;;;&nbsp;We&nbsp;memoise&nbsp;the&nbsp;sanity&nbsp;check&nbsp;so&nbsp;that&nbsp;although&nbsp;it&nbsp;is&nbsp;called&nbsp;for&nbsp;every&nbsp;wiki
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                448&nbsp;&nbsp;;;&nbsp;page,&nbsp;it&nbsp;is&nbsp;only&nbsp;actually&nbsp;evaluated&nbsp;once.
+                </span><br/>
+<span class="covered" title="4 out of 4 forms covered">
+                449&nbsp;&nbsp;(def&nbsp;sanity-check-installation&nbsp;(memoize&nbsp;raw-sanity-check-installation))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                450&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                451&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                452&nbsp;&nbsp;(defn&nbsp;show-sanity-check-error
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                453&nbsp;&nbsp;&nbsp;&nbsp;&quot;Generate&nbsp;an&nbsp;error&nbsp;page&nbsp;in&nbsp;a&nbsp;way&nbsp;which&nbsp;should&nbsp;work&nbsp;even&nbsp;when&nbsp;everything&nbsp;else&nbsp;is&nbsp;broken.
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                454&nbsp;&nbsp;&nbsp;&nbsp;If&nbsp;no&nbsp;argument&nbsp;is&nbsp;passed,&nbsp;run&nbsp;the&nbsp;sanity&nbsp;check&nbsp;and&nbsp;if&nbsp;it&nbsp;fails&nbsp;return&nbsp;page&nbsp;contents;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                455&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;`error`&nbsp;is&nbsp;passed,&nbsp;just&nbsp;return&nbsp;page&nbsp;content&nbsp;describing&nbsp;the&nbsp;error.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                456&nbsp;&nbsp;&nbsp;&nbsp;([error]
+                </span><br/>
+<span class="covered" title="3 out of 3 forms covered">
+                457&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;[messages&nbsp;(get-locale-messages)]
+                </span><br/>
+<span class="partial" title="62 out of 287 forms covered">
+                458&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(html
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                459&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:html
+                </span><br/>
+<span class="covered" title="3 out of 3 forms covered">
+                460&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(as-hiccup-head&nbsp;messages)
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                461&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:body
+                </span><br/>
+<span class="partial" title="3 out of 6 forms covered">
+                462&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(as-hiccup-header&nbsp;messages)
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                463&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:div&nbsp;{:id&nbsp;&quot;error&quot;}
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                464&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:p&nbsp;{:class&nbsp;&quot;error&quot;}&nbsp;(.getMessage&nbsp;error)]]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                465&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:div&nbsp;{:id&nbsp;&quot;main-container&quot;&nbsp;:class&nbsp;&quot;sanity-check-report&quot;}
+                </span><br/>
+<span class="partial" title="4 out of 16 forms covered">
+                466&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:p&nbsp;&nbsp;(as-hiccup&nbsp;:smeagol-misconfiguration&nbsp;messages)]
+                </span><br/>
+<span class="partial" title="3 out of 12 forms covered">
+                467&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(as-hiccup&nbsp;error&nbsp;messages)
+                </span><br/>
+<span class="partial" title="2 out of 8 forms covered">
+                468&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(as-hiccup-see-doc&nbsp;messages)]
+                </span><br/>
+<span class="partial" title="2 out of 8 forms covered">
+                469&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(as-hiccup-footer&nbsp;messages)]])))
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                470&nbsp;&nbsp;&nbsp;&nbsp;([]
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                471&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(try
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                472&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(sanity-check-installation)
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                473&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(catch&nbsp;Exception&nbsp;any
+                </span><br/>
+<span class="not-covered" title="0 out of 16 forms covered">
+                474&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(timbre&#x2F;error&nbsp;any&nbsp;&quot;Failure&nbsp;during&nbsp;sanity&nbsp;check&quot;)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                475&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(show-sanity-check-error&nbsp;any)))))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                476&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="4 out of 4 forms covered">
+                477&nbsp;&nbsp;(show-sanity-check-error&nbsp;(Exception.&nbsp;&quot;That&#x27;s&nbsp;insane!&quot;))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                478&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                479&nbsp;&nbsp;
+                </span><br/>
+ </body>
+</html>

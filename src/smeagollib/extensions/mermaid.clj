@@ -72,7 +72,9 @@
   text file pointing to a valid `graph-spec`; otherwise, it is expected to BE a
   valid `graph-spec`.
 
-  Lightly mung this `graph-spec`, assumed to be a mermaid specification."
+  Lightly mung this `graph-spec`, assumed to be a mermaid specification.
+   
+   For more information, see [Mermaid](https://mermaid-js.github.io/mermaid/#/)."
   [^String url-or-graph-spec ^Integer index]
   (let [data (resource-url-or-data->data url-or-graph-spec)
         graph-spec (:data data)]

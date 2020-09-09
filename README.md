@@ -1,6 +1,6 @@
 # smeagollib
 
-The working parts of the Smeagol Wiki engine, stripped out as a library.
+The working parts of the [Smeagol Wiki engine](https://github.com/journeyman-cc/smeagol), stripped out as a library. It is anticipated that future versions of Smeagol will depend on this library.
 
 ## Motivation
 

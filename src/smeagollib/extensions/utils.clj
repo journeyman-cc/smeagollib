@@ -1,6 +1,6 @@
 (ns ^{:doc "Utility functions useful to extension processors."
       :author "Simon Brooke"}
-  smeagol.extensions.utils
+  smeagollib.extensions.utils
   (:require [cemerick.url :refer (url)]
             [clj-yaml.core :as yaml]
             [clojure.data.json :as json]

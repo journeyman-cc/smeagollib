@@ -31,7 +31,9 @@
 (defn process-geocsv
   "If this `url-or-geo-csv` is a valid URL, it is assumed to point to a CSV file
   containing geographical point data; otherwise, it is expected to be CSV formatted
-  text with at least `latitude` and `longitude` columns."
+  text with at least `latitude` and `longitude` columns.
+   
+   For more information, see [geocsv-js](https://github.com/simon-brooke/geocsv-js)."
   [^String url-or-geo-csv ^Integer index]
   (let [data (resource-url-or-data->data url-or-geo-csv)
         geo-csv (:data data)]

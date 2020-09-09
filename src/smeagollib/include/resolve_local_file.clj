@@ -1,6 +1,6 @@
 (ns ^{:doc "Functions related to the include of markdown-paged - providing
 a plugable load-local-include-links componet. This namespaces is implementation detail for
-smeagol.include and not inteded for direct usage."
+smeagollib.include and not intended for direct usage."
       :author "Michael Jerger"}
   smeagollib.include.resolve-local-file
   (:require

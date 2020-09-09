@@ -1,15 +1,15 @@
 
 (ns ^{:doc "Render a page as HTML."
       :author "Simon Brooke"}
-  smeagol.layout
+  smeagollib.layout
   (:require [clojure.string :as s]
             [compojure.response :refer [Renderable]]
             [environ.core :refer [env]]
             [ring.util.anti-forgery :refer [anti-forgery-field]]
             [ring.util.response :refer [content-type response]]
             [selmer.parser :as parser]
-            [smeagol.sanity :refer [show-sanity-check-error]]
-            [smeagol.util :as util]))
+            [smeagollib.sanity :refer [show-sanity-check-error]]
+            [smeagollib.util :as util]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
@@ -66,7 +66,7 @@
                      :i18n (util/get-messages request)
                      :dev (env :dev)
                      :servlet-context
-                     (if-let [context (:servlet-context request)]
+                     (when-let [context (:servlet-context request)]
                        ;; If we're not inside a serlvet environment (for
                        ;; example when using mock requests), then
                        ;; .getContextPath might not exist

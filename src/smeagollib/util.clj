@@ -8,9 +8,9 @@
             [noir.io :as io]
             [noir.session :as session]
             [scot.weft.i18n.core :as i18n]
-            [smeagol.authenticate :as auth]
-            [smeagol.configuration :refer [config]]
-            [smeagol.local-links :refer [local-links]]
+            [smeagollib.authenticate :as auth]
+            [smeagollib.configuration :refer [config]]
+            [smeagollib.local-links :refer [local-links]]
             [taoensso.timbre :as log]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -95,11 +95,11 @@
       true
       (do
         (log/error
-          "In `smeagol.util/local-url? `" file-path "` is not a servable resource.")
+          "In `smeagollib.util/local-url? `" file-path "` is not a servable resource.")
         false))
     (catch Exception any
       (log/error
-        "In `smeagol.util/local-url `" file-path "` is not a servable resource:" any)
+        "In `smeagollib.util/local-url `" file-path "` is not a servable resource:" any)
       false)))
 
 (defn local-url
@@ -121,11 +121,11 @@
         path
         (do
           (log/error
-            "In `smeagol.util/local-url `" file-path "` is not a servable resource.")
+            "In `smeagollib.util/local-url `" file-path "` is not a servable resource.")
           file-path)))
     (catch Exception any
       (log/error
-        "In `smeagol.util/local-url `" file-path "` is not a servable resource:" any)
+        "In `smeagollib.util/local-url `" file-path "` is not a servable resource:" any)
       file-path)))
 
 ;; (local-url? "vendor/node_modules/photoswipe/dist/photoswipe.min.js")
@@ -133,7 +133,7 @@
 
 (defn standard-params
   "Return a map of standard parameters to pass to the template renderer."
-  [request]
+  [_]
   (let [user (session/get :user)]
     {:user user
      :admin (auth/get-admin user)

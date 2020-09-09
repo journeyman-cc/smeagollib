@@ -2,7 +2,7 @@
 include links. This namespace is implementation detail for 
 smeagollib.include and not inteded for direct usage."
       :author "Michael Jerger"}
-  smeagol.include.parse
+  smeagollib.include.parse
   (:require
     [schema.core :as s]))
 

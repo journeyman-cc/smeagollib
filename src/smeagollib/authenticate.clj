@@ -1,9 +1,9 @@
 (ns ^{:doc "Authentication functions."
       :author "Simon Brooke"}
-  smeagollib.authenticate
+ smeagollib.authenticate
   (:require [crypto.password.scrypt :as password]
             [noir.io :as io]
-            [smeagol.configuration :refer [config]]
+            [smeagollib.configuration :refer [config]]
             [taoensso.timbre :as log]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -35,25 +35,25 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; the relative path to the password file.
-(def password-file-path
-  "Path to the password file."
-  ;; TODO: portability; elegance. Not very happy with this.
+(def ^:dynamic *password-file-path*
+  "Path to the password file. Dynamic, primarily to allow it to be overridden 
+   for test purposes."
   (or
-    (:passwd config)
-    (str (io/resource-path) "../passwd")))
+   (:passwd config)
+   (str (io/resource-path) "../passwd")))
 
 
 (defn- get-users
   "Get the whole content of the password file as a clojure map"
   []
-  (read-string (slurp password-file-path)))
+  (read-string (slurp *password-file-path*)))
 
 
 (defn authenticate
   "Return `true` if this `username`/`password` pair match, `false` otherwise"
   [username password]
   (let [user ((keyword username) (get-users))]
-    (log/info (str "Authenticating " username " against " password-file-path))
+    (log/info (str "Authenticating " username " against " *password-file-path*))
     (and user
          (:password user)
          (or
@@ -101,21 +101,21 @@
       (cond
         (and user
              (or
-               (.equals (:password user) oldpass)
-               (password/check oldpass (:password user))))
+              (.equals (:password user) oldpass)
+              (password/check oldpass (:password user))))
         (do
-          (locking password-file-path
-            (spit password-file-path
+          (locking *password-file-path*
+            (spit *password-file-path*
                   (merge users
                          {keywd
                           (merge user
                                  {:password (password/encrypt newpass)})})))
-        (log/info (str "Successfully changed password for user " username))
+          (log/info (str "Successfully changed password for user " username))
           true))
       (catch Exception any
         (log/error any
-          (format "Changing password failed for user %s failed: %s (%s)"
-                  username (.getName (.getClass any)) (.getMessage any)))
+                   (format "Changing password failed for user %s failed: %s (%s)"
+                           username (.getName (.getClass any)) (.getMessage any)))
         false))))
 
 
@@ -129,44 +129,42 @@
   "Return the map of features of this user, if any."
   [username]
   (when
-    (and username (pos? (count (str username))))
+   (and username (pos? (count (str username))))
     ((keyword username) (get-users))))
 
 
 (defn add-user
   "Add a user to the passwd file with this `username`, initial password `newpass`,
-  `email` address and `admin`  flag; *or*, modify an existing user. Return true
-  if user is successfully stored, false otherwise."
+`email` address and `admin`  flag; *or*, modify an existing user. Return true
+if user is successfully stored, false otherwise."
   [username newpass email admin]
   (log/info  "Trying to add user " username)
   (cond
     (not (string? username)) (throw (Exception. "Username must be a string."))
     (zero? (count username)) (throw (Exception. "Username cannot be zero length"))
     :else (let [users (get-users)
-               user ((keyword username) users)
-               password (when
+                user ((keyword username) users)
+                password (when
                           (and newpass (evaluate-password newpass))
-                          (password/encrypt newpass))
-               details {:email email
-                        :admin (if
-                                 (and (string? admin) (pos? (count admin)))
-                                 true
-                                 false)}
-               ;; if we have a valid password we want to include it in the details to update.
-               full-details (if password
-                              (assoc details :password password)
-                              details)]
-           (try
-             (locking password-file-path
-               (spit password-file-path
-                     (assoc users (keyword username) (merge user full-details)))
-               (log/info  "Successfully added user " username)
-               true)
-             (catch Exception any
-               (log/error any
-                 (format "Adding user %s failed: %s (%s)"
-                         username (.getName (.getClass any)) (.getMessage any)))
-               false)))))
+                           (password/encrypt newpass))
+                details {:email email
+                         :admin (or (true? admin)
+                                    (and (string? admin) (pos? (count admin))))}
+              ;; if we have a valid password we want to include it in the details to update.
+                full-details (if password
+                               (assoc details :password password)
+                               details)]
+            (try
+              (locking *password-file-path*
+                (spit *password-file-path*
+                      (assoc users (keyword username) (merge user full-details)))
+                (log/info  "Successfully added user " username)
+                true)
+              (catch Exception any
+                (log/error any
+                           (format "Adding user %s failed: %s (%s)"
+                                   username (.getName (.getClass any)) (.getMessage any)))
+                false)))))
 
 
 (defn delete-user
@@ -174,13 +172,13 @@
   [username]
   (let [users (get-users)]
     (try
-      (locking password-file-path
-        (spit password-file-path
+      (locking *password-file-path*
+        (spit *password-file-path*
               (dissoc users (keyword username)))
         (log/info (str "Successfully deleted user " username))
         true)
       (catch Exception any
         (log/error any
-          (format "Deleting user %s failed: %s (%s)"
-                  username (.getName (.getClass any)) (.getMessage any)))
+                   (format "Deleting user %s failed: %s (%s)"
+                           username (.getName (.getClass any)) (.getMessage any)))
         false))))

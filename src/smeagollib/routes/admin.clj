@@ -3,9 +3,9 @@
  smeagollib.routes.admin
   (:require [clojure.walk :refer [keywordize-keys]]
             [taoensso.timbre :as timbre]
-            [smeagol.authenticate :as auth]
-            [smeagol.layout :as layout]
-            [smeagol.util :as util]))
+            [smeagollib.authenticate :as auth]
+            [smeagollib.layout :as layout]
+            [smeagollib.util :as util]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;

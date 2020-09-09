@@ -6,7 +6,7 @@
             [me.raynes.fs :as fs]
             [ring.util.mime-type :refer [ext-mime-type]]
             [ring.util.response :as response]
-            [smeagol.util :refer [local-url-base content-dir]]
+            [smeagollib.util :refer [local-url-base content-dir]]
             [taoensso.timbre :as log]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -105,50 +105,3 @@
     (with-mime-type-for-file
       (response/file-response s)
       s)))
-
-;; (find-image "froboz.jpg" "resources/public/img/Unknown-pin.png"
-;;             [;; TODO: should map over the configured
-;;               ;; thumbnail paths in ascending order
-;;               ;; by size - for map pins, smaller images are
-;;               ;; better.
-;;               (fs/file upload-dir "map-pin")
-;;               (fs/file upload-dir "small")
-;;               (fs/file upload-dir "med")])
-
-
-
-;; (response/file-response "resources/public/img/smeagol.png")
-
-;; (def r {:ssl-client-cert nil,
-;;         :access-rules [{:redirect "/auth",
-;;                         :rule #object[smeagol.handler$user_access 0x7ee9346 "smeagol.handler$user_access@7ee9346"]}],
-;;         :protocol "HTTP/1.1",
-;;         :cookies {"ring-session" {:value "4e7c059e-2796-44a0-b03a-c712dae43588"}},
-;;         :remote-addr "127.0.0.1",
-;;         :params {:n "froboz"},
-;;         :flash nil,
-;;         :route-params {:n "froboz"},
-;;         :headers {"cookie" "ring-session=4e7c059e-2796-44a0-b03a-c712dae43588",
-;;                   "accept" "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-;;                   "upgrade-insecure-requests" "1", "user-agent" "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:73.0) Gecko/20100101 Firefox/73.0",
-;;                   "connection" "keep-alive",
-;;                   "host" "localhost:3000",
-;;                   "accept-language" "en-GB,en;q=0.7,en-US;q=0.3",
-;;                   "accept-encoding" "gzip, deflate",
-;;                   "dnt" "1"},
-;;         :server-port 3000,
-;;         :content-length nil,
-;;         :form-params {},
-;;         :session/key "4e7c059e-2796-44a0-b03a-c712dae43588",
-;;         :query-params {},
-;;         :content-type nil,
-;;         :character-encoding nil,
-;;         :uri "/map-pin/froboz",
-;;         :server-name "localhost",
-;;         :query-string nil,
-;;         :body #object[org.eclipse.jetty.server.HttpInputOverHTTP 0x5abc1216 "HttpInputOverHTTP@5abc1216"],
-;;         :multipart-params {},
-;;         :scheme :http,
-;;         :request-method :get,
-;;         :session {:ring.middleware.anti-forgery/anti-forgery-token "2HVXUnBfpuw6kpLTWXTbiSk4zQN5/qPfvJtI/rw5Ju+m/f5I4r5nsOeEr1tuS5YWrXlNRWO6ruX/MHl4",
-;;                   :ring.middleware.session-timeout/idle-timeout 1582725564}}

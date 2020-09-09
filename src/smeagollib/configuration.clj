@@ -116,7 +116,7 @@
                (let [file-contents (try
                                      (read-string (slurp config-file-path))
                                      (catch Exception x
-                                       (log/error
+                                       (log/warn
                                          (str
                                            "Failed to read configuration from "
                                            config-file-path

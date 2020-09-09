@@ -1,0 +1,1511 @@
+<html>
+ <head>
+   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <link rel="stylesheet" href="../../coverage.css"/>  <title> smeagollib/routes/wiki.clj </title>
+ </head>
+ <body>
+<span class="covered" title="1 out of 1 forms covered">
+                001&nbsp;&nbsp;(ns&nbsp;^{:doc&nbsp;&quot;Render&nbsp;all&nbsp;the&nbsp;main&nbsp;pages&nbsp;of&nbsp;a&nbsp;very&nbsp;simple&nbsp;Wiki&nbsp;engine.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                002&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:author&nbsp;&quot;Simon&nbsp;Brooke&quot;}
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                003&nbsp;&nbsp;&nbsp;smeagollib.routes.wiki
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                004&nbsp;&nbsp;&nbsp;&nbsp;(:require&nbsp;[cemerick.url&nbsp;:refer&nbsp;(url-encode&nbsp;url-decode)]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                005&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[clj-jgit.porcelain&nbsp;:as&nbsp;git]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                006&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[clojure.java.io&nbsp;:as&nbsp;cjio]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                007&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[clojure.pprint&nbsp;:refer&nbsp;[pprint]]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                008&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[clojure.string&nbsp;:as&nbsp;cs]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                009&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[clojure.walk&nbsp;:refer&nbsp;[keywordize-keys]]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                010&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[com.stuartsierra.component&nbsp;:as&nbsp;component]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                011&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[compojure.core&nbsp;:refer&nbsp;[defroutes&nbsp;GET&nbsp;POST]]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                012&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[java-time&nbsp;:as&nbsp;jt]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                013&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[markdown.core&nbsp;:as&nbsp;md]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                014&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[me.raynes.fs&nbsp;:as&nbsp;fs]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                015&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[noir.response&nbsp;:as&nbsp;response]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                016&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[noir.util.route&nbsp;:as&nbsp;route]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                017&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[noir.session&nbsp;:as&nbsp;session]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                018&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[smeagollib.authenticate&nbsp;:as&nbsp;auth]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                019&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[smeagollib.configuration&nbsp;:refer&nbsp;[config]]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                020&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[smeagollib.diff2html&nbsp;:as&nbsp;d2h]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                021&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[smeagollib.finder&nbsp;:refer&nbsp;[find-image]]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                022&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[smeagollib.formatting&nbsp;:refer&nbsp;[md-&gt;html]]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                023&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[smeagollib.history&nbsp;:as&nbsp;hist]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                024&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[smeagollib.include.resolve-local-file&nbsp;:as&nbsp;resolve]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                025&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[smeagollib.include&nbsp;:as&nbsp;include]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                026&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[smeagollib.layout&nbsp;:as&nbsp;layout]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                027&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[smeagollib.local-links&nbsp;:refer&nbsp;[local-links]]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                028&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[smeagollib.routes.admin&nbsp;:as&nbsp;admin]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                029&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[smeagollib.sanity&nbsp;:refer&nbsp;[show-sanity-check-error]]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                030&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[smeagollib.uploads&nbsp;:as&nbsp;ul]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                031&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[smeagollib.util&nbsp;:refer&nbsp;[content-dir&nbsp;get-message
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                032&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;get-servlet-context-path&nbsp;local-url
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                033&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;local-url-base&nbsp;standard-params
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                034&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;start-page&nbsp;upload-dir]]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                035&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[taoensso.timbre&nbsp;:as&nbsp;log]))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                036&nbsp;&nbsp;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                037&nbsp;&nbsp;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                038&nbsp;&nbsp;;;;;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                039&nbsp;&nbsp;;;;;&nbsp;Smeagol:&nbsp;a&nbsp;very&nbsp;simple&nbsp;Wiki&nbsp;engine.
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                040&nbsp;&nbsp;;;;;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                041&nbsp;&nbsp;;;;;&nbsp;This&nbsp;program&nbsp;is&nbsp;free&nbsp;software;&nbsp;you&nbsp;can&nbsp;redistribute&nbsp;it&nbsp;and&#x2F;or
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                042&nbsp;&nbsp;;;;;&nbsp;modify&nbsp;it&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                043&nbsp;&nbsp;;;;;&nbsp;as&nbsp;published&nbsp;by&nbsp;the&nbsp;Free&nbsp;Software&nbsp;Foundation;&nbsp;either&nbsp;version&nbsp;2
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                044&nbsp;&nbsp;;;;;&nbsp;of&nbsp;the&nbsp;License,&nbsp;or&nbsp;(at&nbsp;your&nbsp;option)&nbsp;any&nbsp;later&nbsp;version.
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                045&nbsp;&nbsp;;;;;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                046&nbsp;&nbsp;;;;;&nbsp;This&nbsp;program&nbsp;is&nbsp;distributed&nbsp;in&nbsp;the&nbsp;hope&nbsp;that&nbsp;it&nbsp;will&nbsp;be&nbsp;useful,
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                047&nbsp;&nbsp;;;;;&nbsp;but&nbsp;WITHOUT&nbsp;ANY&nbsp;WARRANTY;&nbsp;without&nbsp;even&nbsp;the&nbsp;implied&nbsp;warranty&nbsp;of
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                048&nbsp;&nbsp;;;;;&nbsp;MERCHANTABILITY&nbsp;or&nbsp;FITNESS&nbsp;FOR&nbsp;A&nbsp;PARTICULAR&nbsp;PURPOSE.&nbsp;&nbsp;See&nbsp;the
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                049&nbsp;&nbsp;;;;;&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License&nbsp;for&nbsp;more&nbsp;details.
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                050&nbsp;&nbsp;;;;;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                051&nbsp;&nbsp;;;;;&nbsp;You&nbsp;should&nbsp;have&nbsp;received&nbsp;a&nbsp;copy&nbsp;of&nbsp;the&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                052&nbsp;&nbsp;;;;;&nbsp;along&nbsp;with&nbsp;this&nbsp;program;&nbsp;if&nbsp;not,&nbsp;write&nbsp;to&nbsp;the&nbsp;Free&nbsp;Software
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                053&nbsp;&nbsp;;;;;&nbsp;Foundation,&nbsp;Inc.,&nbsp;51&nbsp;Franklin&nbsp;Street,&nbsp;Fifth&nbsp;Floor,&nbsp;Boston,&nbsp;MA&nbsp;&nbsp;02110-1301,
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                054&nbsp;&nbsp;;;;;&nbsp;USA.
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                055&nbsp;&nbsp;;;;;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                056&nbsp;&nbsp;;;;;&nbsp;Copyright&nbsp;(C)&nbsp;2014&nbsp;Simon&nbsp;Brooke
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                057&nbsp;&nbsp;;;;;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                058&nbsp;&nbsp;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                059&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                060&nbsp;&nbsp;(defn&nbsp;process-source
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                061&nbsp;&nbsp;&nbsp;&nbsp;&quot;Process&nbsp;`source-text`&nbsp;and&nbsp;save&nbsp;it&nbsp;to&nbsp;the&nbsp;specified&nbsp;`file-path`,&nbsp;committing&nbsp;it
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                062&nbsp;&nbsp;&nbsp;&nbsp;to&nbsp;Git&nbsp;and&nbsp;finally&nbsp;redirecting&nbsp;to&nbsp;wiki-page.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                063&nbsp;&nbsp;&nbsp;&nbsp;[params&nbsp;suffix&nbsp;request]
+                </span><br/>
+<span class="not-covered" title="0 out of 18 forms covered">
+                064&nbsp;&nbsp;&nbsp;&nbsp;(log&#x2F;trace&nbsp;(format&nbsp;&quot;process-source:&nbsp;&#x27;%s&#x27;&quot;&nbsp;request))
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                065&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;[source-text&nbsp;(:src&nbsp;params)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                066&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;page&nbsp;(:page&nbsp;params)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                067&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file-name&nbsp;(str&nbsp;page&nbsp;suffix)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                068&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file-path&nbsp;(cjio&#x2F;file&nbsp;content-dir&nbsp;file-name)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                069&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;git-repo&nbsp;(hist&#x2F;load-or-init-repo&nbsp;content-dir)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                070&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;user&nbsp;(session&#x2F;get&nbsp;:user)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                071&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;email&nbsp;(auth&#x2F;get-email&nbsp;user)
+                </span><br/>
+<span class="not-covered" title="0 out of 12 forms covered">
+                072&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;summary&nbsp;(format&nbsp;&quot;%s:&nbsp;%s&quot;&nbsp;user&nbsp;(or&nbsp;(:summary&nbsp;params)&nbsp;&quot;no&nbsp;summary&quot;))]
+                </span><br/>
+<span class="not-covered" title="0 out of 21 forms covered">
+                073&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(log&#x2F;info&nbsp;(format&nbsp;&quot;Saving&nbsp;%s&#x27;s&nbsp;changes&nbsp;(&#x27;%s&#x27;)&nbsp;to&nbsp;%s&nbsp;in&nbsp;file&nbsp;&#x27;%s&#x27;&quot;&nbsp;user&nbsp;summary&nbsp;page&nbsp;file-path))
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                074&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(spit&nbsp;file-path&nbsp;source-text)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                075&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(git&#x2F;git-add&nbsp;git-repo&nbsp;file-name)
+                </span><br/>
+<span class="not-covered" title="0 out of 8 forms covered">
+                076&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(git&#x2F;git-commit&nbsp;git-repo&nbsp;summary&nbsp;:name&nbsp;user&nbsp;:email&nbsp;email)
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                077&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(response&#x2F;redirect
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                078&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(str
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                079&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&#x2F;wiki?page=&quot;
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                080&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(if
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                081&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(=&nbsp;suffix&nbsp;&quot;.md&quot;)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                082&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(url-encode&nbsp;page)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                083&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(get-message&nbsp;:default-page-title&nbsp;request))))))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                084&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                085&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                086&nbsp;&nbsp;(defn&nbsp;edit-page
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                087&nbsp;&nbsp;&nbsp;&nbsp;&quot;Render&nbsp;a&nbsp;page&nbsp;in&nbsp;a&nbsp;text-area&nbsp;for&nbsp;editing.&nbsp;This&nbsp;could&nbsp;have&nbsp;been&nbsp;done&nbsp;in&nbsp;the&nbsp;same&nbsp;function&nbsp;as&nbsp;wiki-page,
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                088&nbsp;&nbsp;&nbsp;&nbsp;and&nbsp;that&nbsp;would&nbsp;have&nbsp;been&nbsp;neat,&nbsp;but&nbsp;I&nbsp;couldn&#x27;t&nbsp;see&nbsp;how&nbsp;to&nbsp;establish&nbsp;security&nbsp;if&nbsp;that&nbsp;were&nbsp;done.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                089&nbsp;&nbsp;&nbsp;&nbsp;([request]
+                </span><br/>
+<span class="not-covered" title="0 out of 10 forms covered">
+                090&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(edit-page&nbsp;request&nbsp;(get-message&nbsp;:default-page-title&nbsp;request)&nbsp;&quot;.md&quot;&nbsp;&quot;edit.html&quot;&nbsp;&quot;_edit-side-bar.md&quot;))
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                091&nbsp;&nbsp;&nbsp;&nbsp;([request&nbsp;default&nbsp;suffix&nbsp;template&nbsp;side-bar]
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                092&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(or
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                093&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(show-sanity-check-error)
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                094&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;[params&nbsp;(keywordize-keys&nbsp;(:params&nbsp;request))
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                095&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;src-text&nbsp;(:src&nbsp;params)
+                </span><br/>
+<span class="not-covered" title="0 out of 8 forms covered">
+                096&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;page&nbsp;(or&nbsp;(:page&nbsp;params)&nbsp;default)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                097&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file-name&nbsp;(str&nbsp;page&nbsp;suffix)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                098&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file-path&nbsp;(cjio&#x2F;file&nbsp;content-dir&nbsp;file-name)
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                099&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exists?&nbsp;(.exists&nbsp;(cjio&#x2F;as-file&nbsp;file-path))
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                100&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;user&nbsp;(session&#x2F;get&nbsp;:user)]
+                </span><br/>
+<span class="not-covered" title="0 out of 14 forms covered">
+                101&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(log&#x2F;info
+                </span><br/>
+<span class="not-covered" title="0 out of 7 forms covered">
+                102&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(format&nbsp;(if-not
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                103&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exists?
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                104&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;User&nbsp;%s:&nbsp;File&nbsp;&#x27;%s&#x27;&nbsp;not&nbsp;found;&nbsp;creating&nbsp;a&nbsp;new&nbsp;file&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                105&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;User&nbsp;%s&nbsp;Opening&nbsp;&#x27;%s&#x27;&nbsp;for&nbsp;editing&quot;)
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                106&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;user&nbsp;file-path))
+                </span><br/>
+<span class="not-covered" title="0 out of 7 forms covered">
+                107&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(if&nbsp;src-text&nbsp;(process-source&nbsp;params&nbsp;suffix&nbsp;request)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                108&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(layout&#x2F;render&nbsp;template
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                109&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(merge&nbsp;(standard-params&nbsp;request)
+                </span><br/>
+<span class="not-covered" title="0 out of 14 forms covered">
+                110&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{:title&nbsp;(str&nbsp;(get-message&nbsp;:edit-title-prefix&nbsp;request)&nbsp;&quot;&nbsp;&quot;&nbsp;page)
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                111&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:page&nbsp;page
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                112&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:side-bar&nbsp;(md&#x2F;md-to-html-string
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                113&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(local-links
+                </span><br/>
+<span class="not-covered" title="0 out of 6 forms covered">
+                114&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(slurp&nbsp;(cjio&#x2F;file&nbsp;content-dir&nbsp;side-bar)))
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                115&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:heading-anchors&nbsp;true)
+                </span><br/>
+<span class="not-covered" title="0 out of 6 forms covered">
+                116&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:content&nbsp;(if&nbsp;exists?&nbsp;(slurp&nbsp;file-path)&nbsp;&quot;&quot;)
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                117&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:exists&nbsp;exists?})))))))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                118&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                119&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                120&nbsp;&nbsp;(defn&nbsp;edit-css-page
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                121&nbsp;&nbsp;&nbsp;&nbsp;&quot;Render&nbsp;a&nbsp;stylesheet&nbsp;in&nbsp;a&nbsp;text-area&nbsp;for&nbsp;editing..&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                122&nbsp;&nbsp;&nbsp;&nbsp;[request]
+                </span><br/>
+<span class="not-covered" title="0 out of 7 forms covered">
+                123&nbsp;&nbsp;&nbsp;&nbsp;(edit-page&nbsp;request&nbsp;&quot;stylesheet&quot;&nbsp;&quot;.css&quot;&nbsp;&quot;edit-css.html&quot;&nbsp;&quot;_edit-side-bar.md&quot;))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                124&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                125&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                126&nbsp;&nbsp;(def&nbsp;md-include-system
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                127&nbsp;&nbsp;&nbsp;&nbsp;&quot;Allowing&nbsp;Markdown&nbsp;includes.&nbsp;Unfortunately&nbsp;the&nbsp;contributor&nbsp;who&nbsp;contributed
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                128&nbsp;&nbsp;&nbsp;&nbsp;this&nbsp;didn&#x27;t&nbsp;document&nbsp;it,&nbsp;and&nbsp;I&nbsp;haven&#x27;t&nbsp;yet&nbsp;worked&nbsp;out&nbsp;how&nbsp;it&nbsp;works.&nbsp;TODO:
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                129&nbsp;&nbsp;&nbsp;&nbsp;investigate&nbsp;and&nbsp;document.&quot;
+                </span><br/>
+<span class="covered" title="2 out of 2 forms covered">
+                130&nbsp;&nbsp;&nbsp;&nbsp;(component&#x2F;start
+                </span><br/>
+<span class="covered" title="4 out of 4 forms covered">
+                131&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(component&#x2F;system-map
+                </span><br/>
+<span class="covered" title="3 out of 3 forms covered">
+                132&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:resolver&nbsp;(resolve&#x2F;new-resolver&nbsp;content-dir)
+                </span><br/>
+<span class="covered" title="2 out of 2 forms covered">
+                133&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:includer&nbsp;(component&#x2F;using
+                </span><br/>
+<span class="covered" title="2 out of 2 forms covered">
+                134&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(include&#x2F;new-includer)
+                </span><br/>
+<span class="covered" title="2 out of 2 forms covered">
+                135&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:resolver]))))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                136&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                137&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                138&nbsp;&nbsp;(defn&nbsp;preferred-source
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                139&nbsp;&nbsp;&nbsp;&nbsp;&quot;Here,&nbsp;`component`&nbsp;is&nbsp;expected&nbsp;to&nbsp;be&nbsp;a&nbsp;map&nbsp;with&nbsp;two&nbsp;keys,&nbsp;`:local`&nbsp;and
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                140&nbsp;&nbsp;&nbsp;&nbsp;`:remote`.&nbsp;If&nbsp;the&nbsp;value&nbsp;of&nbsp;`:extensions-from`&nbsp;in&nbsp;`config.edn`&nbsp;is&nbsp;remote
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                141&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;the&nbsp;value&nbsp;of&nbsp;`:remote`&nbsp;is&nbsp;not&nbsp;nil,&nbsp;then&nbsp;the&nbsp;value&nbsp;of&nbsp;`:remote`&nbsp;will
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                142&nbsp;&nbsp;&nbsp;&nbsp;be&nbsp;returned.&nbsp;Otherwise,&nbsp;if&nbsp;the&nbsp;value&nbsp;of&nbsp;`:local`&nbsp;is&nbsp;nil&nbsp;and&nbsp;the&nbsp;value&nbsp;of
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                143&nbsp;&nbsp;&nbsp;&nbsp;`:remote`&nbsp;is&nbsp;non-nil,&nbsp;the&nbsp;value&nbsp;of&nbsp;`:remote`&nbsp;will&nbsp;be&nbsp;returned.&nbsp;By&nbsp;default,
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                144&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;value&nbsp;of&nbsp;`:local`&nbsp;will&nbsp;be&nbsp;returned.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                145&nbsp;&nbsp;&nbsp;&nbsp;[component&nbsp;ks]
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                146&nbsp;&nbsp;&nbsp;&nbsp;(try
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                147&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;[l&nbsp;(:local&nbsp;component)
+                </span><br/>
+<span class="not-covered" title="0 out of 10 forms covered">
+                148&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l&#x27;&nbsp;(if-not&nbsp;(empty?&nbsp;l)&nbsp;(local-url&nbsp;l)&nbsp;l)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                149&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;r&nbsp;(:remote&nbsp;component)]
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                150&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(cond
+                </span><br/>
+<span class="not-covered" title="0 out of 6 forms covered">
+                151&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(=&nbsp;(:extensions-from&nbsp;config)&nbsp;:remote)
+                </span><br/>
+<span class="not-covered" title="0 out of 6 forms covered">
+                152&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(if&nbsp;(empty?&nbsp;r)&nbsp;l&#x27;&nbsp;r)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                153&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(empty?&nbsp;l&#x27;)&nbsp;r
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                154&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:else&nbsp;l&#x27;))
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                155&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(catch&nbsp;Exception&nbsp;any
+                </span><br/>
+<span class="not-covered" title="0 out of 18 forms covered">
+                156&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(log&#x2F;error&nbsp;&quot;Failed&nbsp;to&nbsp;find&nbsp;appropriate&nbsp;source&nbsp;for&nbsp;component&quot;&nbsp;ks&nbsp;&quot;because:&quot;&nbsp;any)
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                157&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nil)))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                158&nbsp;&nbsp;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                159&nbsp;&nbsp;;;&nbsp;(preferred-source&nbsp;{:local&nbsp;&quot;vendor&#x2F;node_modules&#x2F;photoswipe&#x2F;dist&#x2F;photoswipe.min.js&quot;,
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                160&nbsp;&nbsp;;;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:remote&nbsp;&quot;https:&#x2F;&#x2F;cdnjs.cloudflare.com&#x2F;ajax&#x2F;libs&#x2F;photoswipe&#x2F;4.1.3&#x2F;photoswipe.min.js&quot;}&nbsp;:core)
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                161&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                162&nbsp;&nbsp;(defn&nbsp;collect-preferred
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                163&nbsp;&nbsp;&nbsp;&nbsp;&quot;Collect&nbsp;preferred&nbsp;variants&nbsp;of&nbsp;resources&nbsp;required&nbsp;by&nbsp;extensions&nbsp;used&nbsp;in&nbsp;the
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                164&nbsp;&nbsp;&nbsp;&nbsp;page&nbsp;described&nbsp;in&nbsp;this&nbsp;`processed-text`.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                165&nbsp;&nbsp;&nbsp;&nbsp;([processed-text]
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                166&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(concat
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                167&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(collect-preferred&nbsp;processed-text&nbsp;:scripts)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                168&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(collect-preferred&nbsp;processed-text&nbsp;:styles)))
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                169&nbsp;&nbsp;&nbsp;&nbsp;([processed-text&nbsp;resource-type]
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                170&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(reduce
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                171&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;concat
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                172&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(map
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                173&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(fn&nbsp;[extension-key]
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                174&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(map
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                175&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(fn&nbsp;[requirement]
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                176&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;[r&nbsp;(preferred-source
+                </span><br/>
+<span class="not-covered" title="0 out of 7 forms covered">
+                177&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(-&gt;&nbsp;processed-text&nbsp;:extensions&nbsp;extension-key
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                178&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;resource-type&nbsp;requirement)
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                179&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;requirement)]
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                180&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(when&nbsp;(empty?&nbsp;r)
+                </span><br/>
+<span class="not-covered" title="0 out of 16 forms covered">
+                181&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(log&#x2F;warn&nbsp;&quot;Found&nbsp;no&nbsp;valid&nbsp;URL&nbsp;for&nbsp;requirement&quot;
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                182&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;requirement&nbsp;&quot;of&nbsp;extension&quot;&nbsp;extension-key))
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                183&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;r))
+                </span><br/>
+<span class="not-covered" title="0 out of 9 forms covered">
+                184&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(keys&nbsp;(-&gt;&nbsp;processed-text&nbsp;:extensions&nbsp;extension-key&nbsp;resource-type))))
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                185&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(keys&nbsp;(:extensions&nbsp;processed-text))))))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                186&nbsp;&nbsp;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                187&nbsp;&nbsp;;;&nbsp;(cjio&#x2F;file&nbsp;content-dir&nbsp;&quot;vendor&#x2F;node_modules&#x2F;photoswipe&#x2F;dist&#x2F;photoswipe.min.js&quot;)
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                188&nbsp;&nbsp;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                189&nbsp;&nbsp;;;&nbsp;(def&nbsp;processed-text&nbsp;(md-&gt;html&nbsp;{:source&nbsp;(slurp&nbsp;&quot;resources&#x2F;public&#x2F;content&#x2F;Simplified&nbsp;example&nbsp;gallery.md&quot;&nbsp;)}))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                190&nbsp;&nbsp;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                191&nbsp;&nbsp;;;&nbsp;(preferred-source&nbsp;(-&gt;&nbsp;processed-text&nbsp;:extensions&nbsp;:pswp&nbsp;:scripts&nbsp;:core)&nbsp;:pswp)
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                192&nbsp;&nbsp;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                193&nbsp;&nbsp;;;&nbsp;(-&gt;&nbsp;processed-text&nbsp;:extensions)
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                194&nbsp;&nbsp;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                195&nbsp;&nbsp;;;&nbsp;(collect-preferred&nbsp;processed-text&nbsp;:scripts)
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                196&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                197&nbsp;&nbsp;(defn&nbsp;wiki-page
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                198&nbsp;&nbsp;&nbsp;&nbsp;&quot;Render&nbsp;the&nbsp;markdown&nbsp;page&nbsp;specified&nbsp;in&nbsp;this&nbsp;`request`,&nbsp;if&nbsp;any.&nbsp;If&nbsp;none&nbsp;found,&nbsp;redirect&nbsp;to&nbsp;edit-page&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                199&nbsp;&nbsp;&nbsp;&nbsp;[request]
+                </span><br/>
+<span class="not-covered" title="0 out of 18 forms covered">
+                200&nbsp;&nbsp;&nbsp;&nbsp;(log&#x2F;trace&nbsp;(format&nbsp;&quot;wiki-page:&nbsp;&#x27;%s&#x27;&quot;&nbsp;request))
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                201&nbsp;&nbsp;&nbsp;&nbsp;(or
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                202&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(show-sanity-check-error)
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                203&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;[params&nbsp;(keywordize-keys&nbsp;(:params&nbsp;request))
+                </span><br/>
+<span class="not-covered" title="0 out of 17 forms covered">
+                204&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;page&nbsp;(or&nbsp;(:page&nbsp;params)&nbsp;start-page&nbsp;(get-message&nbsp;:default-page-title&nbsp;&quot;Introduction&quot;&nbsp;request))
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                205&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file-name&nbsp;(str&nbsp;page&nbsp;&quot;.md&quot;)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                206&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file-path&nbsp;(cjio&#x2F;file&nbsp;content-dir&nbsp;file-name)
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                207&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exists?&nbsp;(.exists&nbsp;(cjio&#x2F;as-file&nbsp;file-path))]
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                208&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(if&nbsp;exists?
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                209&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(do
+                </span><br/>
+<span class="not-covered" title="0 out of 19 forms covered">
+                210&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(log&#x2F;info&nbsp;(format&nbsp;&quot;Showing&nbsp;page&nbsp;&#x27;%s&#x27;&nbsp;from&nbsp;file&nbsp;&#x27;%s&#x27;&quot;&nbsp;page&nbsp;file-path))
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                211&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;[processed-text&nbsp;(md-&gt;html
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                212&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(assoc&nbsp;request&nbsp;:source
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                213&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(include&#x2F;expand-include-md
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                214&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(:includer&nbsp;md-include-system)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                215&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(slurp&nbsp;file-path))))]
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                216&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(layout&#x2F;render&nbsp;&quot;wiki.html&quot;
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                217&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(merge&nbsp;(standard-params&nbsp;request)
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                218&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;processed-text
+                </span><br/>
+<span class="not-covered" title="0 out of 8 forms covered">
+                219&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{:title&nbsp;page
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                220&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:scripts&nbsp;(collect-preferred&nbsp;processed-text&nbsp;:scripts)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                221&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:styles&nbsp;(collect-preferred&nbsp;processed-text&nbsp;:styles)
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                222&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:page&nbsp;page
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                223&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:editable&nbsp;true}))))
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                224&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;;else
+                </span><br/>
+<span class="not-covered" title="0 out of 6 forms covered">
+                225&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(response&#x2F;redirect&nbsp;(str&nbsp;&quot;&#x2F;edit?page=&quot;&nbsp;page))))))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                226&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                227&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                228&nbsp;&nbsp;(defn&nbsp;history-page
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                229&nbsp;&nbsp;&nbsp;&nbsp;&quot;Render&nbsp;the&nbsp;history&nbsp;for&nbsp;the&nbsp;markdown&nbsp;page&nbsp;specified&nbsp;in&nbsp;this&nbsp;`request`,
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                230&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;any.&nbsp;If&nbsp;none,&nbsp;error?&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                231&nbsp;&nbsp;&nbsp;&nbsp;[request]
+                </span><br/>
+<span class="not-covered" title="0 out of 6 forms covered">
+                232&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;[params&nbsp;(keywordize-keys&nbsp;(:params&nbsp;request))
+                </span><br/>
+<span class="not-covered" title="0 out of 13 forms covered">
+                233&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;page&nbsp;(url-decode&nbsp;(or&nbsp;(:page&nbsp;params)&nbsp;(get-message&nbsp;:default-page-title&nbsp;request)))
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                234&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file-name&nbsp;(str&nbsp;page&nbsp;&quot;.md&quot;)
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                235&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repo-path&nbsp;content-dir]
+                </span><br/>
+<span class="not-covered" title="0 out of 18 forms covered">
+                236&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(log&#x2F;info&nbsp;(format&nbsp;&quot;Showing&nbsp;history&nbsp;of&nbsp;page&nbsp;&#x27;%s&#x27;&quot;&nbsp;page))
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                237&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(layout&#x2F;render&nbsp;&quot;history.html&quot;
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                238&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(merge&nbsp;(standard-params&nbsp;request)
+                </span><br/>
+<span class="not-covered" title="0 out of 11 forms covered">
+                239&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{:title&nbsp;(str&nbsp;(get-message&nbsp;:history-title-prefix&nbsp;request)
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                240&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&quot;&nbsp;page)
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                241&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:page&nbsp;page
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                242&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:history&nbsp;(hist&#x2F;find-history&nbsp;repo-path&nbsp;file-name)}))))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                243&nbsp;&nbsp;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                244&nbsp;&nbsp;;;;;&nbsp;this&nbsp;next&nbsp;section&nbsp;is&nbsp;all&nbsp;stuff&nbsp;supporting&nbsp;the&nbsp;list-uploads&nbsp;page,&nbsp;and&nbsp;maybe
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                245&nbsp;&nbsp;;;;;&nbsp;should&nbsp;be&nbsp;moved&nbsp;to&nbsp;its&nbsp;own&nbsp;file.
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                246&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                247&nbsp;&nbsp;(def&nbsp;image-extns
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                248&nbsp;&nbsp;&nbsp;&nbsp;&quot;File&nbsp;name&nbsp;extensions&nbsp;suggesting&nbsp;files&nbsp;which&nbsp;can&nbsp;be&nbsp;considered&nbsp;to&nbsp;be&nbsp;images.&quot;
+                </span><br/>
+<span class="covered" title="5 out of 5 forms covered">
+                249&nbsp;&nbsp;&nbsp;&nbsp;#{&quot;.gif&quot;&nbsp;&quot;.jpg&quot;&nbsp;&quot;.jpeg&quot;&nbsp;&quot;.png&quot;})
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                250&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                251&nbsp;&nbsp;(defn&nbsp;format-instant
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                252&nbsp;&nbsp;&nbsp;&nbsp;&quot;Format&nbsp;this&nbsp;`unix-time`,&nbsp;expected&nbsp;to&nbsp;be&nbsp;a&nbsp;Long,&nbsp;into&nbsp;something&nbsp;human&nbsp;readable.
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                253&nbsp;&nbsp;&nbsp;&nbsp;If&nbsp;`template`&nbsp;is&nbsp;supplied,&nbsp;use&nbsp;that&nbsp;as&nbsp;the&nbsp;formatting&nbsp;template&nbsp;as&nbsp;specified&nbsp;for
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                254&nbsp;&nbsp;&nbsp;&nbsp;java.time.Formatter.&nbsp;Assumes&nbsp;system&nbsp;default&nbsp;timezone.&nbsp;Returns&nbsp;a&nbsp;string.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                255&nbsp;&nbsp;&nbsp;&nbsp;([^Long&nbsp;unix-time]
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                256&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(format-instant&nbsp;unix-time&nbsp;&quot;dd&nbsp;MMMM&nbsp;YYYY&quot;))
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                257&nbsp;&nbsp;&nbsp;&nbsp;([^Long&nbsp;unix-time&nbsp;^String&nbsp;template]
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                258&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(jt&#x2F;format
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                259&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(java-time&#x2F;formatter&nbsp;template)
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                260&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(java.time.LocalDateTime&#x2F;ofInstant
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                261&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(java-time&#x2F;instant&nbsp;unix-time)
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                262&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(java.time.ZoneOffset&#x2F;systemDefault)))))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                263&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                264&nbsp;&nbsp;(defn&nbsp;list-uploads-page
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                265&nbsp;&nbsp;&nbsp;&nbsp;&quot;Render&nbsp;a&nbsp;list&nbsp;of&nbsp;all&nbsp;uploaded&nbsp;files&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                266&nbsp;&nbsp;&nbsp;&nbsp;[request]
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                267&nbsp;&nbsp;&nbsp;&nbsp;(let
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                268&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[params&nbsp;(keywordize-keys&nbsp;(:params&nbsp;request))
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                269&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;files
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                270&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(sort-by
+                </span><br/>
+<span class="not-covered" title="0 out of 12 forms covered">
+                271&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(juxt&nbsp;:name&nbsp;(fn&nbsp;[x]&nbsp;(-&nbsp;0&nbsp;(count&nbsp;(:resource&nbsp;x)))))
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                272&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(map
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                273&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#(zipmap
+                </span><br/>
+<span class="not-covered" title="0 out of 6 forms covered">
+                274&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[:base-name&nbsp;:is-image&nbsp;:modified&nbsp;:name&nbsp;:resource]
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                275&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[(fs&#x2F;base-name&nbsp;%)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                276&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(if
+                </span><br/>
+<span class="not-covered" title="0 out of 8 forms covered">
+                277&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(and&nbsp;(fs&#x2F;extension&nbsp;%)
+                </span><br/>
+<span class="not-covered" title="0 out of 6 forms covered">
+                278&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(image-extns&nbsp;(cs&#x2F;lower-case&nbsp;(fs&#x2F;extension&nbsp;%))))
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                279&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;true&nbsp;false)
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                280&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(when
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                281&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(fs&#x2F;mod-time&nbsp;%)
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                282&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(format-instant&nbsp;(fs&#x2F;mod-time&nbsp;%)))
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                283&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(fs&#x2F;name&nbsp;%)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                284&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(local-url&nbsp;%)])
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                285&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(remove
+                </span><br/>
+<span class="not-covered" title="0 out of 11 forms covered">
+                286&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#(or&nbsp;(cs&#x2F;starts-with?&nbsp;(fs&#x2F;name&nbsp;%)&nbsp;&quot;.&quot;)
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                287&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(fs&#x2F;directory?&nbsp;%))
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                288&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(file-seq&nbsp;(clojure.java.io&#x2F;file&nbsp;upload-dir)))))]
+                </span><br/>
+<span class="not-covered" title="0 out of 32 forms covered">
+                289&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(log&#x2F;info&nbsp;(with-out-str&nbsp;(pprint&nbsp;files)))
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                290&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(layout&#x2F;render
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                291&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;list-uploads.html&quot;
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                292&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(merge&nbsp;(standard-params&nbsp;request)
+                </span><br/>
+<span class="not-covered" title="0 out of 6 forms covered">
+                293&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{:title&nbsp;(str
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                294&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(get-message&nbsp;:list-files&nbsp;request)
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                295&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(when
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                296&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(:search&nbsp;params)
+                </span><br/>
+<span class="not-covered" title="0 out of 7 forms covered">
+                297&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(str&nbsp;&quot;&nbsp;&quot;&nbsp;(get-message&nbsp;:matching&nbsp;request))))
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                298&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:search&nbsp;(:search&nbsp;params)
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                299&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:files&nbsp;(if
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                300&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(:search&nbsp;params)
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                301&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(try
+                </span><br/>
+<span class="not-covered" title="0 out of 6 forms covered">
+                302&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;[pattern&nbsp;(re-pattern&nbsp;(:search&nbsp;params))]
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                303&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(filter
+                </span><br/>
+<span class="not-covered" title="0 out of 6 forms covered">
+                304&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#(re-find&nbsp;pattern&nbsp;(:base-name&nbsp;%))
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                305&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;files))
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                306&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(catch&nbsp;Exception&nbsp;_&nbsp;files))
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                307&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;files)}))))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                308&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                309&nbsp;&nbsp;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                310&nbsp;&nbsp;;;;;&nbsp;end&nbsp;of&nbsp;list-uploads&nbsp;section&nbsp;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                311&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                312&nbsp;&nbsp;(defn&nbsp;upload-page
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                313&nbsp;&nbsp;&nbsp;&nbsp;&quot;Render&nbsp;a&nbsp;form&nbsp;to&nbsp;allow&nbsp;the&nbsp;upload&nbsp;of&nbsp;a&nbsp;file.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                314&nbsp;&nbsp;&nbsp;&nbsp;[request]
+                </span><br/>
+<span class="not-covered" title="0 out of 6 forms covered">
+                315&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;[params&nbsp;(keywordize-keys&nbsp;(:params&nbsp;request))
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                316&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data-path&nbsp;(str&nbsp;content-dir&nbsp;&quot;&#x2F;uploads&#x2F;&quot;)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                317&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;git-repo&nbsp;(hist&#x2F;load-or-init-repo&nbsp;content-dir)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                318&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;upload&nbsp;(:upload&nbsp;params)
+                </span><br/>
+<span class="not-covered" title="0 out of 7 forms covered">
+                319&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uploaded&nbsp;(when&nbsp;upload&nbsp;(ul&#x2F;store-upload&nbsp;params&nbsp;data-path))
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                320&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;user&nbsp;(session&#x2F;get&nbsp;:user)
+                </span><br/>
+<span class="not-covered" title="0 out of 12 forms covered">
+                321&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;summary&nbsp;(format&nbsp;&quot;%s:&nbsp;%s&quot;&nbsp;user&nbsp;(or&nbsp;(:summary&nbsp;params)&nbsp;&quot;no&nbsp;summary&quot;))]
+                </span><br/>
+<span class="not-covered" title="0 out of 25 forms covered">
+                322&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(log&#x2F;info&nbsp;(session&#x2F;get&nbsp;:user)&nbsp;&quot;has&nbsp;uploaded&quot;&nbsp;(cs&#x2F;join&nbsp;&quot;;&nbsp;&quot;&nbsp;(map&nbsp;:resource&nbsp;uploaded)))
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                323&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(when-not
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                324&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(empty?&nbsp;uploaded)
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                325&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(doall&nbsp;(map
+                </span><br/>
+<span class="not-covered" title="0 out of 7 forms covered">
+                326&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#(git&#x2F;git-add&nbsp;git-repo&nbsp;(str&nbsp;:resource&nbsp;%))
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                327&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(remove&nbsp;nil?&nbsp;uploaded)))
+                </span><br/>
+<span class="not-covered" title="0 out of 11 forms covered">
+                328&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(git&#x2F;git-commit&nbsp;git-repo&nbsp;summary&nbsp;{:name&nbsp;user&nbsp;:email&nbsp;(auth&#x2F;get-email&nbsp;user)}))
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                329&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(layout&#x2F;render&nbsp;&quot;upload.html&quot;
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                330&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(merge&nbsp;(standard-params&nbsp;request)
+                </span><br/>
+<span class="not-covered" title="0 out of 7 forms covered">
+                331&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{:title&nbsp;(get-message&nbsp;:file-upload-title&nbsp;request)
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                332&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:uploaded&nbsp;uploaded}))))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                333&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                334&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                335&nbsp;&nbsp;(defn&nbsp;version-page
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                336&nbsp;&nbsp;&nbsp;&nbsp;&quot;Render&nbsp;a&nbsp;specific&nbsp;historical&nbsp;version&nbsp;of&nbsp;a&nbsp;page&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                337&nbsp;&nbsp;&nbsp;&nbsp;[request]
+                </span><br/>
+<span class="not-covered" title="0 out of 6 forms covered">
+                338&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;[params&nbsp;(keywordize-keys&nbsp;(:params&nbsp;request))
+                </span><br/>
+<span class="not-covered" title="0 out of 13 forms covered">
+                339&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;page&nbsp;(url-decode&nbsp;(or&nbsp;(:page&nbsp;params)&nbsp;(get-message&nbsp;:default-page-title&nbsp;request)))
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                340&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;version&nbsp;(:version&nbsp;params)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                341&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file-name&nbsp;(str&nbsp;page&nbsp;&quot;.md&quot;)
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                342&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;content&nbsp;(hist&#x2F;fetch-version&nbsp;content-dir&nbsp;file-name&nbsp;version)]
+                </span><br/>
+<span class="not-covered" title="0 out of 19 forms covered">
+                343&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(log&#x2F;info&nbsp;(format&nbsp;&quot;Showing&nbsp;version&nbsp;&#x27;%s&#x27;&nbsp;of&nbsp;page&nbsp;&#x27;%s&#x27;&quot;&nbsp;version&nbsp;page))
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                344&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(layout&#x2F;render&nbsp;&quot;wiki.html&quot;
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                345&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(merge&nbsp;(standard-params&nbsp;request)
+                </span><br/>
+<span class="not-covered" title="0 out of 19 forms covered">
+                346&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{:title&nbsp;(str&nbsp;(get-message&nbsp;:vers-col-hdr&nbsp;request)&nbsp;&quot;&nbsp;&quot;&nbsp;version&nbsp;&quot;&nbsp;&quot;&nbsp;(get-message&nbsp;:of&nbsp;request)&nbsp;&quot;&nbsp;&quot;&nbsp;&nbsp;page)
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                347&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:page&nbsp;page
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                348&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:content&nbsp;(md-&gt;html&nbsp;content)}))))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                349&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                350&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                351&nbsp;&nbsp;(defn&nbsp;diff-page
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                352&nbsp;&nbsp;&nbsp;&nbsp;&quot;Render&nbsp;a&nbsp;diff&nbsp;between&nbsp;two&nbsp;versions&nbsp;of&nbsp;a&nbsp;page&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                353&nbsp;&nbsp;&nbsp;&nbsp;[request]
+                </span><br/>
+<span class="not-covered" title="0 out of 6 forms covered">
+                354&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;[params&nbsp;(keywordize-keys&nbsp;(:params&nbsp;request))
+                </span><br/>
+<span class="not-covered" title="0 out of 13 forms covered">
+                355&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;page&nbsp;(url-decode&nbsp;(or&nbsp;(:page&nbsp;params)&nbsp;(get-message&nbsp;:default-page-title&nbsp;request)))
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                356&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;version&nbsp;(:version&nbsp;params)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                357&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file-name&nbsp;(str&nbsp;page&nbsp;&quot;.md&quot;)]
+                </span><br/>
+<span class="not-covered" title="0 out of 19 forms covered">
+                358&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(log&#x2F;info&nbsp;(format&nbsp;&quot;Showing&nbsp;diff&nbsp;between&nbsp;version&nbsp;&#x27;%s&#x27;&nbsp;of&nbsp;page&nbsp;&#x27;%s&#x27;&nbsp;and&nbsp;current&quot;&nbsp;version&nbsp;page))
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                359&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(layout&#x2F;render&nbsp;&quot;wiki.html&quot;
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                360&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(merge&nbsp;(standard-params&nbsp;request)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                361&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{:title
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                362&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(str
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                363&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(get-message&nbsp;:diff-title-prefix&nbsp;request)
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                364&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&quot;
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                365&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;version
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                366&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&quot;
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                367&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(get-message&nbsp;:of&nbsp;request)
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                368&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;&quot;
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                369&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;page)
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                370&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:page&nbsp;page
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                371&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:content&nbsp;(d2h&#x2F;diff2html
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                372&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(hist&#x2F;diff&nbsp;content-dir&nbsp;file-name&nbsp;version))}))))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                373&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                374&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                375&nbsp;&nbsp;(defn&nbsp;auth-page
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                376&nbsp;&nbsp;&nbsp;&nbsp;&quot;Render&nbsp;the&nbsp;authentication&nbsp;(login)&nbsp;page&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                377&nbsp;&nbsp;&nbsp;&nbsp;[request]
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                378&nbsp;&nbsp;&nbsp;&nbsp;(or
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                379&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(show-sanity-check-error)
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                380&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;[params&nbsp;(keywordize-keys&nbsp;(:params&nbsp;request))
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                381&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;form-params&nbsp;(keywordize-keys&nbsp;(:form-params&nbsp;request))
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                382&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;username&nbsp;(:username&nbsp;form-params)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                383&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;password&nbsp;(:password&nbsp;form-params)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                384&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;action&nbsp;(:action&nbsp;form-params)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                385&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;user&nbsp;(session&#x2F;get&nbsp;:user)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                386&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;redirect-to&nbsp;(:redirect-to&nbsp;params)]
+                </span><br/>
+<span class="not-covered" title="0 out of 21 forms covered">
+                387&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(when&nbsp;redirect-to&nbsp;(log&#x2F;info&nbsp;(str&nbsp;&quot;After&nbsp;auth,&nbsp;redirect&nbsp;to:&nbsp;&quot;&nbsp;redirect-to)))
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                388&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(cond
+                </span><br/>
+<span class="not-covered" title="0 out of 7 forms covered">
+                389&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(=&nbsp;action&nbsp;(get-message&nbsp;:logout-label&nbsp;request))
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                390&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(do
+                </span><br/>
+<span class="not-covered" title="0 out of 19 forms covered">
+                391&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(log&#x2F;info&nbsp;(str&nbsp;&quot;User&nbsp;&quot;&nbsp;user&nbsp;&quot;&nbsp;logging&nbsp;out&quot;))
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                392&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(session&#x2F;remove!&nbsp;:user)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                393&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(response&#x2F;redirect&nbsp;redirect-to))
+                </span><br/>
+<span class="not-covered" title="0 out of 14 forms covered">
+                394&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(and&nbsp;username&nbsp;password&nbsp;(auth&#x2F;authenticate&nbsp;username&nbsp;password))
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                395&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(do
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                396&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(session&#x2F;put!&nbsp;:user&nbsp;username)
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                397&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(response&#x2F;redirect
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                398&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(or
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                399&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;redirect-to
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                400&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(get-servlet-context-path&nbsp;request))))
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                401&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:else
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                402&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(layout&#x2F;render&nbsp;&quot;auth.html&quot;
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                403&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(merge&nbsp;(standard-params&nbsp;request)
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                404&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{:title&nbsp;(if&nbsp;user
+                </span><br/>
+<span class="not-covered" title="0 out of 8 forms covered">
+                405&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(str&nbsp;(get-message&nbsp;:logout-link&nbsp;request)&nbsp;&quot;&nbsp;&quot;&nbsp;user)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                406&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(get-message&nbsp;:login-link&nbsp;request))
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                407&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:redirect-to&nbsp;redirect-to}))))))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                408&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                409&nbsp;&nbsp;(defn&nbsp;wrap-restricted-redirect
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                410&nbsp;&nbsp;&nbsp;&nbsp;;;&nbsp;TODO:&nbsp;this&nbsp;is&nbsp;not&nbsp;idiomatic,&nbsp;and&nbsp;it&#x27;s&nbsp;too&nbsp;late&nbsp;to&nbsp;write&nbsp;something&nbsp;idiomatic&nbsp;just&nbsp;now
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                411&nbsp;&nbsp;&nbsp;&nbsp;;;&nbsp;TODO&nbsp;TODO:&nbsp;it&#x27;s&nbsp;also&nbsp;not&nbsp;working.
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                412&nbsp;&nbsp;&nbsp;&nbsp;;;&nbsp;TODO:&nbsp;probably&nbsp;I&nbsp;need&nbsp;to&nbsp;use&nbsp;either&nbsp;the&nbsp;&#x27;buddy&#x27;&nbsp;or&nbsp;&#x27;friend&#x27;&nbsp;authentication&nbsp;libraries
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                413&nbsp;&nbsp;&nbsp;&nbsp;;;&nbsp;see&nbsp;https:&#x2F;&#x2F;github.com&#x2F;cemerick&#x2F;friend&nbsp;and
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                414&nbsp;&nbsp;&nbsp;&nbsp;;;&nbsp;https:&#x2F;&#x2F;github.com&#x2F;metosin&#x2F;compojure-api&#x2F;wiki&#x2F;Authentication-and-Authorization
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                415&nbsp;&nbsp;&nbsp;&nbsp;;;&nbsp;https:&#x2F;&#x2F;jakemccrary.com&#x2F;blog&#x2F;2014&#x2F;12&#x2F;21&#x2F;restricting-access-to-certain-routes&#x2F;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                416&nbsp;&nbsp;&nbsp;&nbsp;;;&nbsp;but&nbsp;I&nbsp;don&#x27;t&nbsp;yet&nbsp;see&nbsp;even&nbsp;so&nbsp;how&nbsp;to&nbsp;do&nbsp;redirect&nbsp;to&nbsp;the&nbsp;failed&nbsp;page&nbsp;after&nbsp;successful
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                417&nbsp;&nbsp;&nbsp;&nbsp;;;&nbsp;authorisation.
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                418&nbsp;&nbsp;&nbsp;&nbsp;[f&nbsp;request]
+                </span><br/>
+<span class="not-covered" title="0 out of 35 forms covered">
+                419&nbsp;&nbsp;&nbsp;&nbsp;(log&#x2F;info&nbsp;&quot;wrap-restricted-redirect:&nbsp;f:&quot;&nbsp;f&nbsp;&quot;;&nbsp;request&nbsp;&quot;&nbsp;(with-out-str&nbsp;(clojure.pprint&#x2F;pprint&nbsp;request)))
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                420&nbsp;&nbsp;&nbsp;&nbsp;(route&#x2F;restricted
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                421&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(apply
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                422&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                423&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(if
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                424&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(-&gt;&nbsp;request&nbsp;:params&nbsp;:redirect-to)&nbsp;;;&nbsp;a&nbsp;redirect&nbsp;target&nbsp;has&nbsp;already&nbsp;been&nbsp;set
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                425&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;request
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                426&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;;;&nbsp;else&nbsp;merge&nbsp;a&nbsp;redirect&nbsp;target&nbsp;into&nbsp;the&nbsp;params
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                427&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(let
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                428&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[redirect-to&nbsp;(when&nbsp;(:uri&nbsp;request)
+                </span><br/>
+<span class="not-covered" title="0 out of 10 forms covered">
+                429&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(cs&#x2F;join&nbsp;&quot;?&quot;&nbsp;[(:uri&nbsp;request)&nbsp;(:query-string&nbsp;request)]))]
+                </span><br/>
+<span class="not-covered" title="0 out of 7 forms covered">
+                430&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(assoc-in&nbsp;request&nbsp;[:params&nbsp;:redirect-to]&nbsp;redirect-to))))))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                431&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                432&nbsp;&nbsp;(defn&nbsp;passwd-page
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                433&nbsp;&nbsp;&nbsp;&nbsp;&quot;Render&nbsp;a&nbsp;page&nbsp;to&nbsp;change&nbsp;the&nbsp;user&nbsp;password&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                434&nbsp;&nbsp;&nbsp;&nbsp;[request]
+                </span><br/>
+<span class="not-covered" title="0 out of 6 forms covered">
+                435&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;[params&nbsp;(keywordize-keys&nbsp;(:form-params&nbsp;request))
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                436&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;oldpass&nbsp;(:oldpass&nbsp;params)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                437&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pass1&nbsp;(:pass1&nbsp;params)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                438&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pass2&nbsp;(:pass2&nbsp;params)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                439&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;user&nbsp;(session&#x2F;get&nbsp;:user)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                440&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;check-pass&nbsp;(auth&#x2F;evaluate-password&nbsp;pass1&nbsp;pass2)
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                441&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;changed?&nbsp;(and
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                442&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(true?&nbsp;check-pass)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                443&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(auth&#x2F;change-pass&nbsp;user&nbsp;oldpass&nbsp;pass2))]
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                444&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(layout&#x2F;render&nbsp;&quot;passwd.html&quot;
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                445&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(merge&nbsp;(standard-params&nbsp;request)
+                </span><br/>
+<span class="not-covered" title="0 out of 12 forms covered">
+                446&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{:title&nbsp;(str&nbsp;(get-message&nbsp;:chpass-title-prefix&nbsp;request)&nbsp;&quot;&nbsp;&quot;&nbsp;user)
+                </span><br/>
+<span class="not-covered" title="0 out of 7 forms covered">
+                447&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:message&nbsp;(when&nbsp;changed?&nbsp;(get-message&nbsp;:chpass-success&nbsp;request))
+                </span><br/>
+<span class="not-covered" title="0 out of 6 forms covered">
+                448&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:error&nbsp;(cond
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                449&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(nil?&nbsp;oldpass)&nbsp;nil
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                450&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;changed?&nbsp;nil
+                </span><br/>
+<span class="not-covered" title="0 out of 7 forms covered">
+                451&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(keyword?&nbsp;check-pass)&nbsp;(get-message&nbsp;check-pass&nbsp;request)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                452&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:else&nbsp;(get-message&nbsp;:chpass-fail&nbsp;request))}))))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                453&nbsp;&nbsp;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                454&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="3 out of 3 forms covered">
+                455&nbsp;&nbsp;(defroutes&nbsp;wiki-routes
+                </span><br/>
+<span class="partial" title="5 out of 10 forms covered">
+                456&nbsp;&nbsp;&nbsp;&nbsp;(GET&nbsp;&quot;&#x2F;&quot;&nbsp;request&nbsp;(wiki-page&nbsp;request))
+                </span><br/>
+<span class="partial" title="5 out of 10 forms covered">
+                457&nbsp;&nbsp;&nbsp;&nbsp;(GET&nbsp;&quot;&#x2F;auth&quot;&nbsp;request&nbsp;(auth-page&nbsp;request))
+                </span><br/>
+<span class="partial" title="5 out of 10 forms covered">
+                458&nbsp;&nbsp;&nbsp;&nbsp;(POST&nbsp;&quot;&#x2F;auth&quot;&nbsp;request&nbsp;(auth-page&nbsp;request))
+                </span><br/>
+<span class="partial" title="5 out of 10 forms covered">
+                459&nbsp;&nbsp;&nbsp;&nbsp;(GET&nbsp;&quot;&#x2F;changes&quot;&nbsp;request&nbsp;(diff-page&nbsp;request))
+                </span><br/>
+<span class="partial" title="5 out of 13 forms covered">
+                460&nbsp;&nbsp;&nbsp;&nbsp;(GET&nbsp;&quot;&#x2F;delete-user&quot;&nbsp;request&nbsp;(route&#x2F;restricted&nbsp;(admin&#x2F;delete-user&nbsp;request)))
+                </span><br/>
+<span class="partial" title="5 out of 13 forms covered">
+                461&nbsp;&nbsp;&nbsp;&nbsp;(GET&nbsp;&quot;&#x2F;edit&quot;&nbsp;request&nbsp;(route&#x2F;restricted&nbsp;(edit-page&nbsp;request)))
+                </span><br/>
+<span class="partial" title="5 out of 13 forms covered">
+                462&nbsp;&nbsp;&nbsp;&nbsp;(POST&nbsp;&quot;&#x2F;edit&quot;&nbsp;request&nbsp;(route&#x2F;restricted&nbsp;(edit-page&nbsp;request)))
+                </span><br/>
+<span class="partial" title="5 out of 13 forms covered">
+                463&nbsp;&nbsp;&nbsp;&nbsp;(GET&nbsp;&quot;&#x2F;edit-css&quot;&nbsp;request&nbsp;(route&#x2F;restricted&nbsp;(edit-css-page&nbsp;request)))
+                </span><br/>
+<span class="partial" title="5 out of 13 forms covered">
+                464&nbsp;&nbsp;&nbsp;&nbsp;(POST&nbsp;&quot;&#x2F;edit-css&quot;&nbsp;request&nbsp;(route&#x2F;restricted&nbsp;(edit-css-page&nbsp;request)))
+                </span><br/>
+<span class="partial" title="5 out of 13 forms covered">
+                465&nbsp;&nbsp;&nbsp;&nbsp;(GET&nbsp;&quot;&#x2F;edit-users&quot;&nbsp;request&nbsp;(route&#x2F;restricted&nbsp;(admin&#x2F;edit-users&nbsp;request)))
+                </span><br/>
+<span class="partial" title="5 out of 13 forms covered">
+                466&nbsp;&nbsp;&nbsp;&nbsp;(GET&nbsp;&quot;&#x2F;edit-user&quot;&nbsp;request&nbsp;(route&#x2F;restricted&nbsp;(admin&#x2F;edit-user&nbsp;request)))
+                </span><br/>
+<span class="partial" title="5 out of 13 forms covered">
+                467&nbsp;&nbsp;&nbsp;&nbsp;(POST&nbsp;&quot;&#x2F;edit-user&quot;&nbsp;request&nbsp;(route&#x2F;restricted&nbsp;(admin&#x2F;edit-user&nbsp;request)))
+                </span><br/>
+<span class="partial" title="5 out of 10 forms covered">
+                468&nbsp;&nbsp;&nbsp;&nbsp;(GET&nbsp;&quot;&#x2F;history&quot;&nbsp;request&nbsp;(history-page&nbsp;request))
+                </span><br/>
+<span class="partial" title="5 out of 21 forms covered">
+                469&nbsp;&nbsp;&nbsp;&nbsp;(GET&nbsp;&quot;&#x2F;image&#x2F;:n&quot;&nbsp;[n]&nbsp;(find-image
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                470&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                471&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;resources&#x2F;public&#x2F;img&#x2F;smeagol.png&quot;
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                472&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[(fs&#x2F;file&nbsp;local-url-base&nbsp;&quot;img&quot;)
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                473&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;upload-dir
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                474&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;;;&nbsp;TODO:&nbsp;should&nbsp;map&nbsp;over&nbsp;the&nbsp;configured
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                475&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;;;&nbsp;thumbnail&nbsp;paths&nbsp;in&nbsp;descending&nbsp;order
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                476&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;;;&nbsp;by&nbsp;size&nbsp;-&nbsp;generally,&nbsp;bigger&nbsp;images&nbsp;are
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                477&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;;;&nbsp;better.
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                478&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(fs&#x2F;file&nbsp;upload-dir&nbsp;&quot;med&quot;)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                479&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(fs&#x2F;file&nbsp;upload-dir&nbsp;&quot;small&quot;)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                480&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(fs&#x2F;file&nbsp;upload-dir&nbsp;&quot;map-pin&quot;)]))
+                </span><br/>
+<span class="partial" title="5 out of 13 forms covered">
+                481&nbsp;&nbsp;&nbsp;&nbsp;(GET&nbsp;&quot;&#x2F;list-uploads&quot;&nbsp;request&nbsp;(route&#x2F;restricted&nbsp;(list-uploads-page&nbsp;request)))
+                </span><br/>
+<span class="partial" title="5 out of 13 forms covered">
+                482&nbsp;&nbsp;&nbsp;&nbsp;(POST&nbsp;&quot;&#x2F;list-uploads&quot;&nbsp;request&nbsp;(route&#x2F;restricted&nbsp;(list-uploads-page&nbsp;request)))
+                </span><br/>
+<span class="partial" title="5 out of 21 forms covered">
+                483&nbsp;&nbsp;&nbsp;&nbsp;(GET&nbsp;&quot;&#x2F;map-pin&#x2F;:n&quot;&nbsp;[n]&nbsp;(find-image
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                484&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                485&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;resources&#x2F;public&#x2F;img&#x2F;Unknown-pin.png&quot;
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                486&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[;;&nbsp;TODO:&nbsp;should&nbsp;map&nbsp;over&nbsp;the&nbsp;configured
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                487&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;;;&nbsp;thumbnail&nbsp;paths&nbsp;in&nbsp;ascending&nbsp;order
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                488&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;;;&nbsp;by&nbsp;size&nbsp;-&nbsp;for&nbsp;map&nbsp;pins,&nbsp;smaller&nbsp;images&nbsp;are
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                489&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;;;&nbsp;better.
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                490&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(fs&#x2F;file&nbsp;upload-dir&nbsp;&quot;map-pin&quot;)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                491&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(fs&#x2F;file&nbsp;upload-dir&nbsp;&quot;small&quot;)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                492&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(fs&#x2F;file&nbsp;upload-dir&nbsp;&quot;med&quot;)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                493&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(fs&#x2F;file&nbsp;local-url-base&nbsp;&quot;img&quot;)
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                494&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;upload-dir
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                495&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;local-url-base]))
+                </span><br/>
+<span class="partial" title="5 out of 10 forms covered">
+                496&nbsp;&nbsp;&nbsp;&nbsp;(GET&nbsp;&quot;&#x2F;passwd&quot;&nbsp;request&nbsp;(passwd-page&nbsp;request))
+                </span><br/>
+<span class="partial" title="5 out of 10 forms covered">
+                497&nbsp;&nbsp;&nbsp;&nbsp;(POST&nbsp;&quot;&#x2F;passwd&quot;&nbsp;request&nbsp;(passwd-page&nbsp;request))
+                </span><br/>
+<span class="partial" title="5 out of 13 forms covered">
+                498&nbsp;&nbsp;&nbsp;&nbsp;(GET&nbsp;&quot;&#x2F;upload&quot;&nbsp;request&nbsp;(route&#x2F;restricted&nbsp;(upload-page&nbsp;request)))
+                </span><br/>
+<span class="partial" title="5 out of 13 forms covered">
+                499&nbsp;&nbsp;&nbsp;&nbsp;(POST&nbsp;&quot;&#x2F;upload&quot;&nbsp;request&nbsp;(route&#x2F;restricted&nbsp;(upload-page&nbsp;request)))
+                </span><br/>
+<span class="partial" title="5 out of 10 forms covered">
+                500&nbsp;&nbsp;&nbsp;&nbsp;(GET&nbsp;&quot;&#x2F;version&quot;&nbsp;request&nbsp;(version-page&nbsp;request))
+                </span><br/>
+<span class="partial" title="5 out of 10 forms covered">
+                501&nbsp;&nbsp;&nbsp;&nbsp;(GET&nbsp;&quot;&#x2F;wiki&quot;&nbsp;request&nbsp;(wiki-page&nbsp;request)))
+                </span><br/>
+ </body>
+</html>

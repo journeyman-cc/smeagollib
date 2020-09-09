@@ -2,7 +2,7 @@
 a plugable load-content component. This namespace is implementation detail for
 smeagollib.include and not inteded for direct usage."
       :author "Michael Jerger"}
-  smeagol.include.resolve
+  smeagollib.include.resolve
   (:require
     [schema.core :as s]))
 
@@ -14,7 +14,7 @@ smeagollib.include and not inteded for direct usage."
 (s/defn dispatch-by-resolver-type :- s/Keyword
   "Dispatcher for different resolver implementations."
   [resolver :- Resolver
-   uri :- s/Str]
+   _ :- s/Str]
   (:type resolver))
 
 (defmulti do-resolve-md
@@ -22,7 +22,7 @@ smeagollib.include and not inteded for direct usage."
   dispatch-by-resolver-type)
 (s/defmethod do-resolve-md :default
   [resolver :- Resolver
-   uri :- s/Str]
+   _ :- s/Str]
   (throw (Exception. (str "No implementation for " resolver))))
 
 (defprotocol ResolveMd

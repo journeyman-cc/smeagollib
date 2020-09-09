@@ -1,6 +1,6 @@
 (ns ^{:doc "Handle file uploads."
       :author "Simon Brooke"}
-  smeagol.uploads
+  smeagollib.uploads
   (:require [clojure.string :as cs]
             [clojure.java.io :as io]
             [image-resizer.core :refer [resize]]
@@ -69,10 +69,10 @@
                           (.setCompressionQuality (float (/ (or quality 75) 100))))
                    (:png :gif)  nil)
         iio-img (IIOImage. img nil nil)]
-    (log/info "smeagol.uploads/write-image: fmt=" fmt "format=" format)
+    (log/info "smeagollib.uploads/write-image: fmt=" fmt "format=" format)
     (if iw
       (.write iw nil iio-img iw-param)
-      (log/error "smeagol.uploads/write-image: no suitable writer found"))))
+      (log/error "smeagollib.uploads/write-image: no suitable writer found"))))
 
 (def image?
   "True if the file at this `filename` appears as though it may be an image"

@@ -4,9 +4,9 @@
   (:require
     [clojure.string :as cs]
     [schema.core :as s]
-    [smeagol.include.parse :as parse]
-    [smeagol.include.resolve :as resolve]
-    [smeagol.include.indent :as indent]))
+    [smeagollib.include.parse :as parse]
+    [smeagollib.include.resolve :as resolve]
+    [smeagollib.include.indent :as indent]))
 
 (s/defrecord Includer
   [resolver])

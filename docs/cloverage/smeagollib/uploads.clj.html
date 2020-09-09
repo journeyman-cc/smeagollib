@@ -1,0 +1,443 @@
+<html>
+ <head>
+   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <link rel="stylesheet" href="../coverage.css"/>  <title> smeagollib/uploads.clj </title>
+ </head>
+ <body>
+<span class="covered" title="1 out of 1 forms covered">
+                001&nbsp;&nbsp;(ns&nbsp;^{:doc&nbsp;&quot;Handle&nbsp;file&nbsp;uploads.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                002&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:author&nbsp;&quot;Simon&nbsp;Brooke&quot;}
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                003&nbsp;&nbsp;&nbsp;&nbsp;smeagollib.uploads
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                004&nbsp;&nbsp;&nbsp;&nbsp;(:require&nbsp;[clojure.string&nbsp;:as&nbsp;cs]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                005&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[clojure.java.io&nbsp;:as&nbsp;io]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                006&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[image-resizer.core&nbsp;:refer&nbsp;[resize]]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                007&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[image-resizer.util&nbsp;:refer&nbsp;[buffered-image&nbsp;dimensions]]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                008&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[me.raynes.fs&nbsp;:as&nbsp;fs]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                009&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[smeagollib.configuration&nbsp;:refer&nbsp;[config]]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                010&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[smeagollib.util&nbsp;:as&nbsp;util]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                011&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[taoensso.timbre&nbsp;:as&nbsp;log])
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                012&nbsp;&nbsp;&nbsp;&nbsp;(:import&nbsp;[java.io&nbsp;File]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                013&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[java.awt.image&nbsp;RenderedImage]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                014&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[javax.imageio&nbsp;ImageIO&nbsp;ImageWriter&nbsp;ImageWriteParam&nbsp;IIOImage]
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                015&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[javax.imageio.stream&nbsp;FileImageOutputStream]))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                016&nbsp;&nbsp;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                017&nbsp;&nbsp;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                018&nbsp;&nbsp;;;;;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                019&nbsp;&nbsp;;;;;&nbsp;Smeagol:&nbsp;a&nbsp;very&nbsp;simple&nbsp;Wiki&nbsp;engine.
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                020&nbsp;&nbsp;;;;;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                021&nbsp;&nbsp;;;;;&nbsp;This&nbsp;program&nbsp;is&nbsp;free&nbsp;software;&nbsp;you&nbsp;can&nbsp;redistribute&nbsp;it&nbsp;and&#x2F;or
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                022&nbsp;&nbsp;;;;;&nbsp;modify&nbsp;it&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                023&nbsp;&nbsp;;;;;&nbsp;as&nbsp;published&nbsp;by&nbsp;the&nbsp;Free&nbsp;Software&nbsp;Foundation;&nbsp;either&nbsp;version&nbsp;2
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                024&nbsp;&nbsp;;;;;&nbsp;of&nbsp;the&nbsp;License,&nbsp;or&nbsp;(at&nbsp;your&nbsp;option)&nbsp;any&nbsp;later&nbsp;version.
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                025&nbsp;&nbsp;;;;;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                026&nbsp;&nbsp;;;;;&nbsp;This&nbsp;program&nbsp;is&nbsp;distributed&nbsp;in&nbsp;the&nbsp;hope&nbsp;that&nbsp;it&nbsp;will&nbsp;be&nbsp;useful,
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                027&nbsp;&nbsp;;;;;&nbsp;but&nbsp;WITHOUT&nbsp;ANY&nbsp;WARRANTY;&nbsp;without&nbsp;even&nbsp;the&nbsp;implied&nbsp;warranty&nbsp;of
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                028&nbsp;&nbsp;;;;;&nbsp;MERCHANTABILITY&nbsp;or&nbsp;FITNESS&nbsp;FOR&nbsp;A&nbsp;PARTICULAR&nbsp;PURPOSE.&nbsp;&nbsp;See&nbsp;the
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                029&nbsp;&nbsp;;;;;&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License&nbsp;for&nbsp;more&nbsp;details.
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                030&nbsp;&nbsp;;;;;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                031&nbsp;&nbsp;;;;;&nbsp;You&nbsp;should&nbsp;have&nbsp;received&nbsp;a&nbsp;copy&nbsp;of&nbsp;the&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                032&nbsp;&nbsp;;;;;&nbsp;along&nbsp;with&nbsp;this&nbsp;program;&nbsp;if&nbsp;not,&nbsp;write&nbsp;to&nbsp;the&nbsp;Free&nbsp;Software
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                033&nbsp;&nbsp;;;;;&nbsp;Foundation,&nbsp;Inc.,&nbsp;51&nbsp;Franklin&nbsp;Street,&nbsp;Fifth&nbsp;Floor,&nbsp;Boston,&nbsp;MA&nbsp;&nbsp;02110-1301,
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                034&nbsp;&nbsp;;;;;&nbsp;USA.
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                035&nbsp;&nbsp;;;;;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                036&nbsp;&nbsp;;;;;&nbsp;Copyright&nbsp;(C)&nbsp;2017&nbsp;Simon&nbsp;Brooke
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                037&nbsp;&nbsp;;;;;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                038&nbsp;&nbsp;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                039&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                040&nbsp;&nbsp;(def&nbsp;image-file-extns
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                041&nbsp;&nbsp;&nbsp;&nbsp;&quot;Extensions&nbsp;of&nbsp;file&nbsp;types&nbsp;we&nbsp;will&nbsp;attempt&nbsp;to&nbsp;thumbnail.&nbsp;GIF&nbsp;is&nbsp;excluded
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                042&nbsp;&nbsp;&nbsp;&nbsp;because&nbsp;by&nbsp;default&nbsp;the&nbsp;javax.imageio&nbsp;package&nbsp;can&nbsp;read&nbsp;GIF,&nbsp;PNG,&nbsp;and&nbsp;JPEG
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                043&nbsp;&nbsp;&nbsp;&nbsp;images&nbsp;but&nbsp;can&nbsp;only&nbsp;write&nbsp;PNG&nbsp;and&nbsp;JPEG&nbsp;images.&quot;
+                </span><br/>
+<span class="covered" title="4 out of 4 forms covered">
+                044&nbsp;&nbsp;&nbsp;&nbsp;#{&quot;.jpg&quot;&nbsp;&quot;.jpeg&quot;&nbsp;&quot;.png&quot;})
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                045&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                046&nbsp;&nbsp;(defn&nbsp;read-image
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                047&nbsp;&nbsp;&nbsp;&nbsp;&quot;Reads&nbsp;a&nbsp;BufferedImage&nbsp;from&nbsp;source,&nbsp;something&nbsp;that&nbsp;can&nbsp;be&nbsp;turned&nbsp;into
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                048&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;file&nbsp;with&nbsp;clojure.java.io&#x2F;file&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                049&nbsp;&nbsp;&nbsp;&nbsp;[source]
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                050&nbsp;&nbsp;&nbsp;&nbsp;(ImageIO&#x2F;read&nbsp;(io&#x2F;file&nbsp;source)))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                051&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                052&nbsp;&nbsp;(defn&nbsp;write-image
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                053&nbsp;&nbsp;&nbsp;&nbsp;&quot;Writes&nbsp;img,&nbsp;a&nbsp;RenderedImage,&nbsp;to&nbsp;dest,&nbsp;something&nbsp;that&nbsp;can&nbsp;be&nbsp;turned&nbsp;into
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                054&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;file&nbsp;with&nbsp;clojure.java.io&#x2F;file.
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                055&nbsp;&nbsp;&nbsp;&nbsp;Takes&nbsp;the&nbsp;following&nbsp;keys&nbsp;as&nbsp;options:
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                056&nbsp;&nbsp;&nbsp;&nbsp;:format&nbsp;&nbsp;-&nbsp;:gif,&nbsp;:jpg,&nbsp;:png&nbsp;or&nbsp;anything&nbsp;supported&nbsp;by&nbsp;ImageIO
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                057&nbsp;&nbsp;&nbsp;&nbsp;:quality&nbsp;-&nbsp;for&nbsp;JPEG&nbsp;images,&nbsp;a&nbsp;number&nbsp;between&nbsp;0&nbsp;and&nbsp;100&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                058&nbsp;&nbsp;&nbsp;&nbsp;[^RenderedImage&nbsp;img&nbsp;dest&nbsp;&amp;&nbsp;{:keys&nbsp;[format&nbsp;quality]&nbsp;:or&nbsp;{format&nbsp;:jpg}}]
+                </span><br/>
+<span class="not-covered" title="0 out of 18 forms covered">
+                059&nbsp;&nbsp;&nbsp;&nbsp;(log&#x2F;info&nbsp;&quot;Writing&nbsp;as&quot;&nbsp;format&nbsp;&quot;to&quot;&nbsp;&nbsp;dest)
+                </span><br/>
+<span class="not-covered" title="0 out of 9 forms covered">
+                060&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;[fmt&nbsp;(subs&nbsp;(fs&#x2F;extension&nbsp;(cs&#x2F;lower-case&nbsp;dest))&nbsp;1)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                061&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iw&nbsp;(doto&nbsp;^ImageWriter&nbsp;(first
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                062&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(iterator-seq
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                063&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(ImageIO&#x2F;getImageWritersByFormatName
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                064&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fmt)))
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                065&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(.setOutput&nbsp;(FileImageOutputStream.&nbsp;(io&#x2F;file&nbsp;dest))))
+                </span><br/>
+<span class="not-covered" title="0 out of 11 forms covered">
+                066&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iw-param&nbsp;(case&nbsp;format
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                067&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:jpg&nbsp;(doto&nbsp;^ImageWriteParam&nbsp;(.getDefaultWriteParam&nbsp;iw)
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                068&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(.setCompressionMode&nbsp;ImageWriteParam&#x2F;MODE_EXPLICIT)
+                </span><br/>
+<span class="not-covered" title="0 out of 12 forms covered">
+                069&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(.setCompressionQuality&nbsp;(float&nbsp;(&#x2F;&nbsp;(or&nbsp;quality&nbsp;75)&nbsp;100))))
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                070&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(:png&nbsp;:gif)&nbsp;&nbsp;nil)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                071&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iio-img&nbsp;(IIOImage.&nbsp;img&nbsp;nil&nbsp;nil)]
+                </span><br/>
+<span class="not-covered" title="0 out of 18 forms covered">
+                072&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(log&#x2F;info&nbsp;&quot;smeagollib.uploads&#x2F;write-image:&nbsp;fmt=&quot;&nbsp;fmt&nbsp;&quot;format=&quot;&nbsp;format)
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                073&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(if&nbsp;iw
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                074&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(.write&nbsp;iw&nbsp;nil&nbsp;iio-img&nbsp;iw-param)
+                </span><br/>
+<span class="not-covered" title="0 out of 15 forms covered">
+                075&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(log&#x2F;error&nbsp;&quot;smeagollib.uploads&#x2F;write-image:&nbsp;no&nbsp;suitable&nbsp;writer&nbsp;found&quot;))))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                076&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                077&nbsp;&nbsp;(def&nbsp;image?
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                078&nbsp;&nbsp;&nbsp;&nbsp;&quot;True&nbsp;if&nbsp;the&nbsp;file&nbsp;at&nbsp;this&nbsp;`filename`&nbsp;appears&nbsp;as&nbsp;though&nbsp;it&nbsp;may&nbsp;be&nbsp;an&nbsp;image&quot;
+                </span><br/>
+<span class="covered" title="2 out of 2 forms covered">
+                079&nbsp;&nbsp;&nbsp;&nbsp;(memoize
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                080&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(fn&nbsp;[filename]
+                </span><br/>
+<span class="not-covered" title="0 out of 9 forms covered">
+                081&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(image-file-extns&nbsp;(fs&#x2F;extension&nbsp;(cs&#x2F;lower-case&nbsp;(str&nbsp;filename)))))))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                082&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                083&nbsp;&nbsp;(defn&nbsp;auto-thumbnail
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                084&nbsp;&nbsp;&nbsp;&nbsp;&quot;For&nbsp;each&nbsp;of&nbsp;the&nbsp;thumbnail&nbsp;sizes&nbsp;in&nbsp;the&nbsp;configuration,&nbsp;create&nbsp;a&nbsp;thumbnail
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                085&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;the&nbsp;file&nbsp;with&nbsp;this&nbsp;`filename`&nbsp;on&nbsp;this&nbsp;`path`,&nbsp;provided&nbsp;that&nbsp;it&nbsp;is&nbsp;a
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                086&nbsp;&nbsp;&nbsp;&nbsp;scalable&nbsp;image&nbsp;and&nbsp;is&nbsp;larger&nbsp;than&nbsp;the&nbsp;size.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                087&nbsp;&nbsp;&nbsp;&nbsp;([^String&nbsp;path&nbsp;^String&nbsp;filename]
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                088&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(if
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                089&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(image?&nbsp;filename)
+                </span><br/>
+<span class="not-covered" title="0 out of 8 forms covered">
+                090&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;[original&nbsp;(buffered-image&nbsp;(File.&nbsp;(str&nbsp;path&nbsp;filename)))]&nbsp;;;&nbsp;fs&#x2F;file?
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                091&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(map
+                </span><br/>
+<span class="not-covered" title="0 out of 6 forms covered">
+                092&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#(auto-thumbnail&nbsp;path&nbsp;filename&nbsp;%&nbsp;original)
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                093&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(keys&nbsp;(config&nbsp;:thumbnails))))
+                </span><br/>
+<span class="not-covered" title="0 out of 16 forms covered">
+                094&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(log&#x2F;info&nbsp;filename&nbsp;&quot;&nbsp;cannot&nbsp;be&nbsp;thumbnailed.&quot;)))
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                095&nbsp;&nbsp;&nbsp;&nbsp;([^String&nbsp;path&nbsp;^String&nbsp;filename&nbsp;size&nbsp;^RenderedImage&nbsp;image]
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                096&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(when&nbsp;image
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                097&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(try
+                </span><br/>
+<span class="not-covered" title="0 out of 6 forms covered">
+                098&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;[s&nbsp;(-&gt;&nbsp;config&nbsp;:thumbnails&nbsp;size)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                099&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d&nbsp;(dimensions&nbsp;image)
+                </span><br/>
+<span class="not-covered" title="0 out of 7 forms covered">
+                100&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p&nbsp;(io&#x2F;file&nbsp;path&nbsp;(name&nbsp;size)&nbsp;filename)]
+                </span><br/>
+<span class="not-covered" title="0 out of 16 forms covered">
+                101&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(if&nbsp;(and&nbsp;(integer?&nbsp;s)&nbsp;(some&nbsp;#(&gt;&nbsp;%&nbsp;s)&nbsp;d))
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                102&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(do
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                103&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(write-image
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                104&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(resize&nbsp;image&nbsp;s&nbsp;s)
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                105&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p
+                </span><br/>
+<span class="not-covered" title="0 out of 8 forms covered">
+                106&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:format&nbsp;(keyword&nbsp;(subs&nbsp;(fs&#x2F;extension&nbsp;filename)&nbsp;1)))
+                </span><br/>
+<span class="not-covered" title="0 out of 18 forms covered">
+                107&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(log&#x2F;info&nbsp;&quot;Created&nbsp;a&nbsp;&quot;&nbsp;size&nbsp;&quot;&nbsp;thumbnail&nbsp;of&nbsp;&quot;&nbsp;filename)
+                </span><br/>
+<span class="not-covered" title="0 out of 11 forms covered">
+                108&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{:size&nbsp;size&nbsp;:filename&nbsp;filename&nbsp;:location&nbsp;(str&nbsp;p)&nbsp;:is-image&nbsp;true})
+                </span><br/>
+<span class="not-covered" title="0 out of 21 forms covered">
+                109&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(log&#x2F;info&nbsp;filename&nbsp;&quot;is&nbsp;smaller&nbsp;than&nbsp;&quot;&nbsp;s&nbsp;&quot;x&quot;&nbsp;s&nbsp;&quot;&nbsp;and&nbsp;was&nbsp;not&nbsp;scaled&nbsp;to&nbsp;&quot;&nbsp;size)))
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                110&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(catch&nbsp;Exception&nbsp;any
+                </span><br/>
+<span class="not-covered" title="0 out of 20 forms covered">
+                111&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(log&#x2F;error&nbsp;&quot;Failed&nbsp;to&nbsp;thumbnail&nbsp;image&nbsp;&quot;&nbsp;filename&nbsp;&quot;to&nbsp;size&quot;&nbsp;size&nbsp;&quot;:&quot;&nbsp;any))))))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                112&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                113&nbsp;&nbsp;(defn&nbsp;store-upload
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                114&nbsp;&nbsp;&nbsp;&nbsp;&quot;Store&nbsp;an&nbsp;upload&nbsp;both&nbsp;to&nbsp;the&nbsp;file&nbsp;system&nbsp;and&nbsp;to&nbsp;the&nbsp;database.
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                115&nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;issue&nbsp;with&nbsp;storing&nbsp;an&nbsp;upload&nbsp;is&nbsp;moving&nbsp;it&nbsp;into&nbsp;place.
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                116&nbsp;&nbsp;&nbsp;&nbsp;If&nbsp;`params`&nbsp;are&nbsp;passed&nbsp;as&nbsp;a&nbsp;map,&nbsp;it&nbsp;is&nbsp;expected&nbsp;that&nbsp;this&nbsp;is&nbsp;a&nbsp;map&nbsp;from
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                117&nbsp;&nbsp;&nbsp;&nbsp;an&nbsp;HTTP&nbsp;POST&nbsp;operation&nbsp;of&nbsp;a&nbsp;form&nbsp;with&nbsp;type&nbsp;`multipart&#x2F;form-data`.
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                118&nbsp;&nbsp;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                119&nbsp;&nbsp;&nbsp;&nbsp;On&nbsp;success,&nbsp;returns&nbsp;the&nbsp;file&nbsp;object&nbsp;uploaded.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                120&nbsp;&nbsp;&nbsp;&nbsp;[params&nbsp;path]
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                121&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;[upload&nbsp;(:upload&nbsp;params)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                122&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tmp-file&nbsp;(:tempfile&nbsp;upload)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                123&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;filename&nbsp;(:filename&nbsp;upload)]
+                </span><br/>
+<span class="not-covered" title="0 out of 14 forms covered">
+                124&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(log&#x2F;info
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                125&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(str&nbsp;&quot;Storing&nbsp;upload&nbsp;file:&nbsp;&quot;&nbsp;upload))
+                </span><br/>
+<span class="not-covered" title="0 out of 14 forms covered">
+                126&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(log&#x2F;debug
+                </span><br/>
+<span class="not-covered" title="0 out of 7 forms covered">
+                127&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(str&nbsp;&quot;store-upload&nbsp;mv&nbsp;file:&nbsp;&quot;&nbsp;tmp-file&nbsp;&quot;&nbsp;to:&nbsp;&quot;&nbsp;path&nbsp;filename))
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                128&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(if&nbsp;tmp-file
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                129&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(try
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                130&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;[p&nbsp;(io&#x2F;file&nbsp;path&nbsp;filename)]
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                131&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(.renameTo&nbsp;tmp-file&nbsp;p)
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                132&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(map
+                </span><br/>
+<span class="not-covered" title="0 out of 14 forms covered">
+                133&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#(assoc&nbsp;%&nbsp;:resource&nbsp;(subs&nbsp;(:location&nbsp;%)&nbsp;(inc&nbsp;(count&nbsp;util&#x2F;content-dir))))
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                134&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(remove
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                135&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nil?
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                136&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(cons
+                </span><br/>
+<span class="not-covered" title="0 out of 6 forms covered">
+                137&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{:size&nbsp;:original
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                138&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:filename&nbsp;filename
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                139&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:location&nbsp;(str&nbsp;p)
+                </span><br/>
+<span class="not-covered" title="0 out of 8 forms covered">
+                140&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:is-image&nbsp;(and&nbsp;(image?&nbsp;filename)&nbsp;true)}
+                </span><br/>
+<span class="not-covered" title="0 out of 12 forms covered">
+                141&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(remove&nbsp;nil?&nbsp;(or&nbsp;(auto-thumbnail&nbsp;path&nbsp;filename)&nbsp;&#x27;()))))))
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                142&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(catch&nbsp;Exception&nbsp;x
+                </span><br/>
+<span class="not-covered" title="0 out of 27 forms covered">
+                143&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(log&#x2F;error&nbsp;(str&nbsp;&quot;Failed&nbsp;to&nbsp;move&nbsp;&quot;&nbsp;tmp-file&nbsp;&quot;&nbsp;to&nbsp;&quot;&nbsp;path&nbsp;filename&nbsp;&quot;;&nbsp;&quot;&nbsp;(type&nbsp;x)&nbsp;&quot;:&nbsp;&quot;&nbsp;(.getMessage&nbsp;x)))
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                144&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(throw&nbsp;x)))
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                145&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(throw&nbsp;(Exception.&nbsp;&quot;No&nbsp;file&nbsp;found?&quot;)))))
+                </span><br/>
+ </body>
+</html>

@@ -1,0 +1,158 @@
+<html>
+ <head>
+   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <link rel="stylesheet" href="../../coverage.css"/>  <title> smeagollib/include/parse.clj </title>
+ </head>
+ <body>
+<span class="covered" title="1 out of 1 forms covered">
+                001&nbsp;&nbsp;(ns&nbsp;^{:doc&nbsp;&quot;Functions&nbsp;related&nbsp;to&nbsp;the&nbsp;include&nbsp;of&nbsp;markdown-paged&nbsp;-&nbsp;parsing&nbsp;of
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                002&nbsp;&nbsp;include&nbsp;links.&nbsp;This&nbsp;namespace&nbsp;is&nbsp;implementation&nbsp;detail&nbsp;for&nbsp;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                003&nbsp;&nbsp;smeagollib.include&nbsp;and&nbsp;not&nbsp;inteded&nbsp;for&nbsp;direct&nbsp;usage.&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                004&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:author&nbsp;&quot;Michael&nbsp;Jerger&quot;}
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                005&nbsp;&nbsp;&nbsp;&nbsp;smeagollib.include.parse
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                006&nbsp;&nbsp;&nbsp;&nbsp;(:require
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                007&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[schema.core&nbsp;:as&nbsp;s]))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                008&nbsp;&nbsp;
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                009&nbsp;&nbsp;(def&nbsp;IncludeLink
+                </span><br/>
+<span class="covered" title="6 out of 6 forms covered">
+                010&nbsp;&nbsp;&nbsp;&nbsp;{:replace&nbsp;s&#x2F;Str
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                011&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:uri&nbsp;s&#x2F;Str
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                012&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:indent-heading&nbsp;s&#x2F;Num
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                013&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:indent-list&nbsp;s&#x2F;Num})
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                014&nbsp;&nbsp;
+                </span><br/>
+<span class="partial" title="22 out of 123 forms covered">
+                015&nbsp;&nbsp;(s&#x2F;defn
+                </span><br/>
+<span class="covered" title="2 out of 2 forms covered">
+                016&nbsp;&nbsp;&nbsp;&nbsp;convert-indent-to-int&nbsp;:-&nbsp;s&#x2F;Num
+                </span><br/>
+<span class="covered" title="2 out of 2 forms covered">
+                017&nbsp;&nbsp;&nbsp;&nbsp;[indents&nbsp;:-&nbsp;[s&#x2F;Str]]
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                018&nbsp;&nbsp;&nbsp;&nbsp;(if&nbsp;(some?&nbsp;indents)
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                019&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Integer&#x2F;valueOf&nbsp;(nth&nbsp;indents&nbsp;2))
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                020&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                021&nbsp;&nbsp;
+                </span><br/>
+<span class="partial" title="23 out of 124 forms covered">
+                022&nbsp;&nbsp;(s&#x2F;defn
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                023&nbsp;&nbsp;&nbsp;&nbsp;parse-indent-list
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                024&nbsp;&nbsp;&nbsp;&nbsp;[md-src&nbsp;:-&nbsp;s&#x2F;Str]
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                025&nbsp;&nbsp;&nbsp;&nbsp;(re-matches&nbsp;#&quot;.*(:indent-list&nbsp;(\d)).*&quot;&nbsp;md-src))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                026&nbsp;&nbsp;
+                </span><br/>
+<span class="partial" title="23 out of 124 forms covered">
+                027&nbsp;&nbsp;(s&#x2F;defn
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                028&nbsp;&nbsp;&nbsp;&nbsp;parse-indent-heading
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                029&nbsp;&nbsp;&nbsp;&nbsp;[md-src&nbsp;:-&nbsp;s&#x2F;Str]
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                030&nbsp;&nbsp;&nbsp;&nbsp;(re-matches&nbsp;#&quot;.*(:indent-heading&nbsp;(\d)).*&quot;&nbsp;md-src))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                031&nbsp;&nbsp;
+                </span><br/>
+<span class="partial" title="23 out of 124 forms covered">
+                032&nbsp;&nbsp;(s&#x2F;defn
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                033&nbsp;&nbsp;&nbsp;&nbsp;parse-include-link
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                034&nbsp;&nbsp;&nbsp;&nbsp;[md-src&nbsp;:-&nbsp;s&#x2F;Str]
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                035&nbsp;&nbsp;&nbsp;&nbsp;(re-seq&nbsp;#&quot;.*(&amp;\[\w*(.*)\w*\]\((.*)\)).*&quot;&nbsp;md-src))
+                </span><br/>
+<span class="blank" title="0 out of 0 forms covered">
+                036&nbsp;&nbsp;
+                </span><br/>
+<span class="partial" title="22 out of 123 forms covered">
+                037&nbsp;&nbsp;(s&#x2F;defn
+                </span><br/>
+<span class="covered" title="3 out of 3 forms covered">
+                038&nbsp;&nbsp;&nbsp;&nbsp;parse-include-md&nbsp;:-&nbsp;[IncludeLink]
+                </span><br/>
+<span class="covered" title="1 out of 1 forms covered">
+                039&nbsp;&nbsp;&nbsp;&nbsp;[md-src&nbsp;:-&nbsp;s&#x2F;Str]
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                040&nbsp;&nbsp;&nbsp;&nbsp;(vec
+                </span><br/>
+<span class="not-covered" title="0 out of 2 forms covered">
+                041&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(map
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                042&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(fn&nbsp;[parse-element]
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                043&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;[replace&nbsp;(nth&nbsp;parse-element&nbsp;1)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                044&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uri&nbsp;(nth&nbsp;parse-element&nbsp;3)
+                </span><br/>
+<span class="not-covered" title="0 out of 4 forms covered">
+                045&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;indents-text&nbsp;(nth&nbsp;parse-element&nbsp;2)]
+                </span><br/>
+<span class="not-covered" title="0 out of 6 forms covered">
+                046&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{:replace&nbsp;replace
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                047&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:uri&nbsp;uri
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                048&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:indent-heading&nbsp;(convert-indent-to-int&nbsp;(parse-indent-heading&nbsp;indents-text))
+                </span><br/>
+<span class="not-covered" title="0 out of 5 forms covered">
+                049&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:indent-list&nbsp;(convert-indent-to-int&nbsp;(parse-indent-list&nbsp;indents-text))}))
+                </span><br/>
+<span class="not-covered" title="0 out of 3 forms covered">
+                050&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(parse-include-link&nbsp;md-src))))
+                </span><br/>
+ </body>
+</html>

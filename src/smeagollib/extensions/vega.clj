@@ -1,7 +1,7 @@
 (ns ^{:doc "Format vega/vis extensions to Semagol's extended markdown format."
       :author "Simon Brooke"}
-  smeagol.extensions.vega
-  (:require [smeagol.extensions.utils :refer [resource-url-or-data->data yaml->json]]
+  smeagollib.extensions.vega
+  (:require [smeagollib.extensions.utils :refer [resource-url-or-data->data yaml->json]]
             [taoensso.timbre :as log]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -66,7 +66,9 @@
   BE a valid `vega-src`.
 
   Process this `vega-src` string, assumed to be in YAML format, into a
-  specification of a Vega chart, and add the plumbing to render it."
+  specification of a Vega chart, and add the plumbing to render it.
+   
+   For more information, see [vega-lite](https://vega.github.io/vega-lite/docs/)."
   [^String src-resource-or-url ^Integer index]
   (let [data (resource-url-or-data->data src-resource-or-url)
         vega-src (:data data)]
