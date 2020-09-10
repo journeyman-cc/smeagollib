@@ -209,52 +209,58 @@
                 068&nbsp;&nbsp;&nbsp;&nbsp;Process&nbsp;this&nbsp;`vega-src`&nbsp;string,&nbsp;assumed&nbsp;to&nbsp;be&nbsp;in&nbsp;YAML&nbsp;format,&nbsp;into&nbsp;a
                 </span><br/>
 <span class="not-tracked" title="0 out of 0 forms covered">
-                069&nbsp;&nbsp;&nbsp;&nbsp;specification&nbsp;of&nbsp;a&nbsp;Vega&nbsp;chart,&nbsp;and&nbsp;add&nbsp;the&nbsp;plumbing&nbsp;to&nbsp;render&nbsp;it.&quot;
+                069&nbsp;&nbsp;&nbsp;&nbsp;specification&nbsp;of&nbsp;a&nbsp;Vega&nbsp;chart,&nbsp;and&nbsp;add&nbsp;the&nbsp;plumbing&nbsp;to&nbsp;render&nbsp;it.
                 </span><br/>
 <span class="not-tracked" title="0 out of 0 forms covered">
-                070&nbsp;&nbsp;&nbsp;&nbsp;[^String&nbsp;src-resource-or-url&nbsp;^Integer&nbsp;index]
+                070&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                071&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For&nbsp;more&nbsp;information,&nbsp;see&nbsp;[vega-lite](https:&#x2F;&#x2F;vega.github.io&#x2F;vega-lite&#x2F;docs&#x2F;).&quot;
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                072&nbsp;&nbsp;&nbsp;&nbsp;[^String&nbsp;src-resource-or-url&nbsp;^Integer&nbsp;index]
                 </span><br/>
 <span class="not-covered" title="0 out of 4 forms covered">
-                071&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;[data&nbsp;(resource-url-or-data-&gt;data&nbsp;src-resource-or-url)
+                073&nbsp;&nbsp;&nbsp;&nbsp;(let&nbsp;[data&nbsp;(resource-url-or-data-&gt;data&nbsp;src-resource-or-url)
                 </span><br/>
 <span class="not-covered" title="0 out of 3 forms covered">
-                072&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vega-src&nbsp;(:data&nbsp;data)]
+                074&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vega-src&nbsp;(:data&nbsp;data)]
                 </span><br/>
 <span class="not-covered" title="0 out of 25 forms covered">
-                073&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(log&#x2F;info&nbsp;&quot;Retrieved&nbsp;vega-src&nbsp;from&nbsp;&quot;&nbsp;(:from&nbsp;data)&nbsp;&quot;&nbsp;`&quot;&nbsp;((:from&nbsp;data)&nbsp;data)&nbsp;&quot;`&quot;)
+                075&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(log&#x2F;info&nbsp;&quot;Retrieved&nbsp;vega-src&nbsp;from&nbsp;&quot;&nbsp;(:from&nbsp;data)&nbsp;&quot;&nbsp;`&quot;&nbsp;((:from&nbsp;data)&nbsp;data)&nbsp;&quot;`&quot;)
                 </span><br/>
 <span class="not-covered" title="0 out of 9 forms covered">
-                074&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(str
+                076&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(str
                 </span><br/>
 <span class="not-covered" title="0 out of 1 forms covered">
-                075&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&lt;div&nbsp;class=&#x27;data-visualisation&#x27;&nbsp;id=&#x27;vis&quot;&nbsp;index&nbsp;&quot;&#x27;&gt;&lt;&#x2F;div&gt;\n&quot;
+                077&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&lt;div&nbsp;class=&#x27;data-visualisation&#x27;&nbsp;id=&#x27;vis&quot;&nbsp;index&nbsp;&quot;&#x27;&gt;&lt;&#x2F;div&gt;\n&quot;
                 </span><br/>
 <span class="not-tracked" title="0 out of 0 forms covered">
-                076&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&lt;script&gt;\n&#x2F;&#x2F;&lt;![CDATA[\nvar&nbsp;vl&quot;
+                078&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&lt;script&gt;\n&#x2F;&#x2F;&lt;![CDATA[\nvar&nbsp;vl&quot;
                 </span><br/>
 <span class="not-covered" title="0 out of 1 forms covered">
-                077&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;index
+                079&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;index
                 </span><br/>
 <span class="not-tracked" title="0 out of 0 forms covered">
-                078&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;=&nbsp;&quot;
+                080&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&nbsp;=&nbsp;&quot;
                 </span><br/>
 <span class="not-covered" title="0 out of 6 forms covered">
-                079&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(yaml-&gt;json&nbsp;(str&nbsp;&quot;$schema:&nbsp;https:&#x2F;&#x2F;vega.github.io&#x2F;schema&#x2F;vega-lite&#x2F;v2.json\n&quot;&nbsp;vega-src))
+                081&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(yaml-&gt;json&nbsp;(str&nbsp;&quot;$schema:&nbsp;https:&#x2F;&#x2F;vega.github.io&#x2F;schema&#x2F;vega-lite&#x2F;v2.json\n&quot;&nbsp;vega-src))
                 </span><br/>
 <span class="not-tracked" title="0 out of 0 forms covered">
-                080&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;;\nvegaEmbed(&#x27;#vis&quot;
-                </span><br/>
-<span class="not-covered" title="0 out of 1 forms covered">
-                081&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;index
-                </span><br/>
-<span class="not-tracked" title="0 out of 0 forms covered">
-                082&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&#x27;,&nbsp;vl&quot;
+                082&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;;\nvegaEmbed(&#x27;#vis&quot;
                 </span><br/>
 <span class="not-covered" title="0 out of 1 forms covered">
                 083&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;index
                 </span><br/>
 <span class="not-tracked" title="0 out of 0 forms covered">
-                084&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;);\n&#x2F;&#x2F;]]\n&lt;&#x2F;script&gt;&quot;)))
+                084&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&#x27;,&nbsp;vl&quot;
+                </span><br/>
+<span class="not-covered" title="0 out of 1 forms covered">
+                085&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;index
+                </span><br/>
+<span class="not-tracked" title="0 out of 0 forms covered">
+                086&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;);\n&#x2F;&#x2F;]]\n&lt;&#x2F;script&gt;&quot;)))
                 </span><br/>
  </body>
 </html>

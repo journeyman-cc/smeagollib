@@ -1,7 +1,7 @@
 (ns ^{:doc "Authentication functions."
       :author "Simon Brooke"}
  smeagollib.authenticate-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [me.raynes.fs :refer [delete normalized]]
             [smeagollib.authenticate :refer [*password-file-path* add-user
                                              authenticate change-pass

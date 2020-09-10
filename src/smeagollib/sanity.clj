@@ -10,7 +10,7 @@
             [hiccup.core :refer [html]]
             [scot.weft.i18n.core :as i18n]
             [smeagollib.authenticate :refer [*password-file-path*]]
-            [smeagollib.configuration :refer [config-file-path config]]
+            [smeagollib.configuration :refer [*config-file-path* config]]
             [smeagollib.util :refer [content-dir upload-dir]]
             [taoensso.timbre :as timbre]))
 
@@ -246,7 +246,7 @@
     (check-config config-path)
     (check-password-file passwd-path)))
   ([]
-   (check-everything content-dir upload-dir config-file-path *password-file-path*)))
+   (check-everything content-dir upload-dir *config-file-path* *password-file-path*)))
 
 
 (defn- get-causes

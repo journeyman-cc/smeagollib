@@ -39,7 +39,7 @@
 ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def config-file-path
+(def ^:dynamic *config-file-path*
   "The relative path to the config file."
   (or
     (env :smeagol-config)
@@ -112,14 +112,14 @@
   values can be overridden by environment variables."
   (memoize (fn []
              (try
-               (log/info (str "Reading configuration from " config-file-path))
+               (log/info (str "Reading configuration from " *config-file-path*))
                (let [file-contents (try
-                                     (read-string (slurp config-file-path))
+                                     (read-string (slurp *config-file-path*))
                                      (catch Exception x
                                        (log/warn
                                          (str
                                            "Failed to read configuration from "
-                                           config-file-path
+                                           *config-file-path*
                                            " because: "
                                            (type x)
                                            "; "
